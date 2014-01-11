@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<project
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+	http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>rebatch-jbatch</artifactId>
+	<groupId>info.bitcrate.rebatch</groupId>
+	<version>0.1-SNAPSHOT</version>
+	<name>Rebatch / JBatch</name>
+
+	<dependencies>
+		<dependency>
+			<groupId>javax.batch</groupId>
+			<artifactId>javax.batch-api</artifactId>
+			<version>1.0</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.0.1</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.inject</groupId>
+			<artifactId>javax.inject</artifactId>
+			<version>1</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.enterprise</groupId>
+			<artifactId>cdi-api</artifactId>
+			<version>1.0</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.geronimo.components</groupId>
+			<artifactId>geronimo-transaction</artifactId>
+			<version>3.1.1</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.geronimo.specs</groupId>
+			<artifactId>geronimo-jpa_2.0_spec</artifactId>
+			<version>1.1</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- Testing libraries -->
+		<dependency> <!-- TCK and default tests -->
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>6.8.7</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency> <!-- camel/arquillian -->
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.derby</groupId>
+			<artifactId>derby</artifactId>
+			<version>10.10.1.1</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.openejb</groupId>
+			<artifactId>openejb-core</artifactId>
+			<version>4.6.0</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!--
+        To debug having TCK at classpath (to be able to debug in TCK classes and/or to get completion in dev-suite.xml):
+        1) mvn process-test-classes
+        2) cp -r target/tck/jsr352-tck-1.0/artifacts/ /tmp
+        3) activate the following dependencies
+        <dependency>
+          <groupId>tck</groupId>
+          <artifactId>tck-impl</artifactId>
+          <version>1.0</version>
+          <systemPath>/tmp/artifacts/jsr352-tck-impl.jar</systemPath>
+          <scope>system</scope>
+        </dependency>
+        <dependency>
+          <groupId>tck</groupId>
+          <artifactId>tck-SPI</artifactId>
+          <version>1.0</version>
+          <systemPath>/tmp/artifacts/jsr352-tck-SPI.jar</systemPath>
+          <scope>system</scope>
+        </dependency>
+        -->
+	</dependencies>
+
+
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>com.googlecode.maven-download-plugin</groupId>
+										<artifactId>maven-download-plugin</artifactId>
+										<versionRange>[1.1.0,)</versionRange>
+										<goals>
+											<goal>wget</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<execute />
+									</action>
+								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.codehaus.mojo</groupId>
+										<artifactId>templating-maven-plugin</artifactId>
+										<versionRange>[1.0-alpha-3,)</versionRange>
+										<goals>
+											<goal>filter-sources</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<execute />
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+
+		<!-- <resources>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+			<resource>
+				<directory>src/main/xsd</directory>
+				<targetPath>xsd</targetPath>
+			</resource>
+		</resources> -->
+		<plugins>
+			<!-- download tcks since i didn't find the maven artifact with tests -->
+			<plugin>
+				<groupId>com.googlecode.maven-download-plugin</groupId>
+				<artifactId>maven-download-plugin</artifactId>
+				<version>1.1.0</version>
+				<executions>
+					<execution>
+						<id>get-tck</id>
+						<phase>process-test-classes</phase>
+						<goals>
+							<goal>wget</goal>
+						</goals>
+						<configuration>
+							<skip>${maven.test.skip}</skip>
+							<url>https://java.net/projects/jbatch/downloads/download/jsr352-tck-1.0.zip</url>
+							<unpack>true</unpack>
+							<outputDirectory>${tck.unpack.dir}</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.16</version>
+				<executions>
+					<execution>
+						<id>rebatch-tests</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+						<configuration>
+							<skip>${maven.test.skip}</skip>
+						</configuration>
+					</execution>
+					<execution>
+						<id>tck-in-memory</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+						<configuration>
+							<skip>${maven.test.skip}</skip>
+							<systemProperties>
+								<PersistenceManagerService>info.bitcrate.rebatch.container.services.persistence.MemoryPersistenceManager</PersistenceManagerService>
+							</systemProperties>
+							<suiteXmlFiles>
+								<suiteXmlFile>${tck.suite}</suiteXmlFile>
+							</suiteXmlFiles>
+							<additionalClasspathElements>
+								<additionalClasspathElement>${tck.dir}/jsr352-tck-impl.jar</additionalClasspathElement>
+								<additionalClasspathElement>${tck.dir}/jsr352-tck-SPI.jar</additionalClasspathElement>
+							</additionalClasspathElements>
+						</configuration>
+					</execution>
+					<execution>
+						<id>tck-jdbc</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+						<configuration>
+							<skip>${maven.test.skip}</skip>
+							<systemProperties>
+								<PersistenceManagerService>info.bitcrate.rebatch.container.services.persistence.JDBCPersistenceManager</PersistenceManagerService>
+							</systemProperties>
+							<suiteXmlFiles>
+								<suiteXmlFile>${tck.suite}</suiteXmlFile>
+							</suiteXmlFiles>
+							<additionalClasspathElements>
+								<additionalClasspathElement>${tck.dir}/jsr352-tck-impl.jar</additionalClasspathElement>
+								<additionalClasspathElement>${tck.dir}/jsr352-tck-SPI.jar</additionalClasspathElement>
+							</additionalClasspathElements>
+						</configuration>
+					</execution>
+					<execution>
+						<id>tck-jpa</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+						<configuration>
+							<skip>${maven.test.skip}</skip>
+							<systemProperties>
+								<PersistenceManagerService>info.bitcrate.rebatch.container.services.persistence.JPAPersistenceService</PersistenceManagerService>
+							</systemProperties>
+							<suiteXmlFiles>
+								<suiteXmlFile>${tck.suite}</suiteXmlFile>
+							</suiteXmlFiles>
+							<additionalClasspathElements>
+								<additionalClasspathElement>${tck.dir}/jsr352-tck-impl.jar</additionalClasspathElement>
+								<additionalClasspathElement>${tck.dir}/jsr352-tck-SPI.jar</additionalClasspathElement>
+							</additionalClasspathElements>
+						</configuration>
+					</execution>
+				</executions>
+				<configuration>
+					<skip>true</skip>
+					<forkCount>1</forkCount>
+					<reuseForks>false</reuseForks>
+
+					<!-- Global config for TCKs shared with rebatch internal tests, that's 
+						not a big deal since internal tests doesn't use it and it avoids to spread 
+						it over all our executions -->
+					<systemProperties>
+						<rebatch.service-manager.log>true</rebatch.service-manager.log>
+
+						<!-- replace properties file -->
+						<tck.execution.waiter.timeout>900000</tck.execution.waiter.timeout>
+						<ExecutionTests.testInvokeJobWithUserStop.sleep>1000</ExecutionTests.testInvokeJobWithUserStop.sleep>
+						<JobOperatorTests.testInvokeJobWithUserStop.sleep>1000</JobOperatorTests.testInvokeJobWithUserStop.sleep>
+						<JobOperatorTests.testJobOperatorGetRunningJobExecutions.sleep>1000</JobOperatorTests.testJobOperatorGetRunningJobExecutions.sleep>
+						<JobOperatorTests.testJobOperatorGetRunningJobExecutions.app.timeinterval>10000</JobOperatorTests.testJobOperatorGetRunningJobExecutions.app.timeinterval>
+						<JobOperatorTests.testJobOperatorGetRunningJobInstancesException.app.timeinterval>10000</JobOperatorTests.testJobOperatorGetRunningJobInstancesException.app.timeinterval>
+						<ParallelExecutionTests.testStopRunningPartitionedStep.sleep>1900</ParallelExecutionTests.testStopRunningPartitionedStep.sleep>
+						<ParallelExecutionTests.testStopRestartRunningPartitionedStep.sleep>1900</ParallelExecutionTests.testStopRestartRunningPartitionedStep.sleep>
+						<ParallelExecutionTests.testInvokeJobWithOnePartitionedStepExitStatus.sleep>2000</ParallelExecutionTests.testInvokeJobWithOnePartitionedStepExitStatus.sleep>
+						<StopOrFailOnExitStatusWithRestartTests.testInvokeJobWithUserStop.sleep>500</StopOrFailOnExitStatusWithRestartTests.testInvokeJobWithUserStop.sleep>
+						<TransactionTests.testGlobalTranNoExceptions.sleep>0</TransactionTests.testGlobalTranNoExceptions.sleep>
+						<TransactionTests.testGlobalTranForcedExceptionWithRollback.sleep>0</TransactionTests.testGlobalTranForcedExceptionWithRollback.sleep>
+						<TransactionTests.testGlobalTranForcedExceptionCheckpointRestart.sleep>0</TransactionTests.testGlobalTranForcedExceptionCheckpointRestart.sleep>
+						<TransactionTests.testGlobalTranNoDelayLongTimeout.sleep>0</TransactionTests.testGlobalTranNoDelayLongTimeout.sleep>
+						<TransactionTests.testGlobalTranLongDelayShortTimeoutThenNoDelayShortTimeout.sleep.1>10000</TransactionTests.testGlobalTranLongDelayShortTimeoutThenNoDelayShortTimeout.sleep.1>
+						<TransactionTests.testGlobalTranLongDelayShortTimeoutThenNoDelayShortTimeout.sleep.2>0</TransactionTests.testGlobalTranLongDelayShortTimeoutThenNoDelayShortTimeout.sleep.2>
+						<TransactionTests.testGlobalTranLongDelayMixOfLongTimeoutStepsAndShortTimeoutSteps.sleep>10000</TransactionTests.testGlobalTranLongDelayMixOfLongTimeoutStepsAndShortTimeoutSteps.sleep>
+						<TransactionTests.testGlobalTranLongDelayMixOfLongTimeoutStepsAndShortTimeoutStepsCustomCheckpointAlgorithm.sleep>10000</TransactionTests.testGlobalTranLongDelayMixOfLongTimeoutStepsAndShortTimeoutStepsCustomCheckpointAlgorithm.sleep>
+						<TransactionTests.testGlobalTranForcedTimeoutCheckpointRestart.sleep.1>10000</TransactionTests.testGlobalTranForcedTimeoutCheckpointRestart.sleep.1>
+						<TransactionTests.testGlobalTranForcedTimeoutCheckpointRestart.sleep.2>0</TransactionTests.testGlobalTranForcedTimeoutCheckpointRestart.sleep.2>
+						<ChunkTests.testChunkTimeBased10Seconds.sleep>500</ChunkTests.testChunkTimeBased10Seconds.sleep>
+						<ChunkTests.testChunkRestartTimeBasedCheckpoint.sleep>500</ChunkTests.testChunkRestartTimeBasedCheckpoint.sleep>
+						<ChunkTests.testChunkTimeBasedTimeLimit0.sleep>500</ChunkTests.testChunkTimeBasedTimeLimit0.sleep>
+						<ChunkTests.testChunkRestartTimeBasedDefaultCheckpoint.sleep>500</ChunkTests.testChunkRestartTimeBasedDefaultCheckpoint.sleep>
+					</systemProperties>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>templating-maven-plugin</artifactId>
+				<version>1.0-alpha-3</version>
+				<executions>
+					<execution>
+						<id>filter-src</id>
+						<goals>
+							<goal>filter-sources</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<properties>
+		<tck.suite>${project.basedir}/src/test/resources/suites/tck.xml</tck.suite>
+		<tck.unpack.dir>${project.build.directory}/tck</tck.unpack.dir>
+		<tck.dir>${tck.unpack.dir}/jsr352-tck-1.0/artifacts</tck.dir>
+	</properties>
+</project>
