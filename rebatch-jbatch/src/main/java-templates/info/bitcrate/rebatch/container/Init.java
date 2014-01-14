@@ -24,13 +24,15 @@ public final class Init {
 	private final static Logger LOGGER = Logger.getLogger(Init.class.getName());
 
 	private final static String LOGO = 
-			"\n"
-			+ "    */*/*/              */                    */                */    \n"
-			+ "   */    */    */*/    */*/*/      */*/*/  */*/*/*/    */*/*/  */*/*/ \n"
-			+ "  */*/*/    */*/*/*/  */    */  */    */    */      */        */    */\n"
-			+ " */    */  */        */    */  */    */    */      */        */    */ \n"
-			+ "*/    */    */*/*/  */*/*/      */*/*/      */*/    */*/*/  */    */   "
-			+ "${project.version}\n";
+		"\n"
+		+ "########  ######## ########     ###    ########  ######  ##     ##\n"
+		+ "##     ## ##       ##     ##   ## ##      ##    ##    ## ##     ##\n"
+		+ "##     ## ##       ##     ##  ##   ##     ##    ##       ##     ##\n"
+		+ "########  ######   ########  ##     ##    ##    ##       #########\n"
+		+ "##   ##   ##       ##     ## #########    ##    ##       ##     ##\n"
+		+ "##    ##  ##       ##     ## ##     ##    ##    ##    ## ##     ##\n"
+		+ "##     ## ######## ########  ##     ##    ##     ######  ##     ##  "
+		+ "${project.version}\n";
 
 	public static void doInit() {
 		if (Boolean.parseBoolean(ServicesManager.value(

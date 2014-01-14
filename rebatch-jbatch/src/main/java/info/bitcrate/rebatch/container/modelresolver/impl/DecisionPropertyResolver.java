@@ -20,6 +20,7 @@ import info.bitcrate.rebatch.container.jsl.TransitionElement;
 import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
 import info.bitcrate.rebatch.jaxb.Decision;
 
+import java.util.List;
 import java.util.Properties;
 
 public class DecisionPropertyResolver extends AbstractPropertyResolver<Decision> {
@@ -28,26 +29,21 @@ public class DecisionPropertyResolver extends AbstractPropertyResolver<Decision>
         super(isPartitionStep);
     }
 
-    public Decision substituteProperties(final Decision decision, final Properties submittedProps, final Properties parentProps) {
+    public Decision resolve(Decision decision, List<Properties> properties) {
+        decision.setId(resolveReferences(decision.getId(), properties));
+        decision.setRef(resolveReferences(decision.getRef(), properties));
 
-        // resolve all the properties used in attributes and update the JAXB
-        // model
-        decision.setId(this.replaceAllProperties(decision.getId(), submittedProps, parentProps));
-        decision.setRef(this.replaceAllProperties(decision.getRef(), submittedProps, parentProps));
-
-        // Resolve all the properties defined for this decision
-        Properties currentProps = parentProps;
         if (decision.getProperties() != null) {
-            currentProps = this.resolveElementProperties(decision.getProperties().getPropertyList(), submittedProps, parentProps);
+        	resolveJSLProperties(decision.getProperties(), properties);
         }
 
         if (decision.getTransitionElements() != null) {
             for (final TransitionElement transitionElement : decision.getTransitionElements()) {
-                PropertyResolverFactory.createTransitionElementPropertyResolver(this.isPartitionedStep).substituteProperties(transitionElement, submittedProps, currentProps);
+                PropertyResolverFactory.createTransitionElementPropertyResolver(isPartitionedStep)
+                .resolve(transitionElement, properties);
             }
         }
 
         return decision;
     }
-
 }

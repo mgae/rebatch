@@ -18,8 +18,8 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.jaxb.ItemWriter;
 
+import java.util.List;
 import java.util.Properties;
-
 
 public class ItemWriterPropertyResolver extends AbstractPropertyResolver<ItemWriter> {
 
@@ -28,19 +28,14 @@ public class ItemWriterPropertyResolver extends AbstractPropertyResolver<ItemWri
     }
 
     @Override
-    public ItemWriter substituteProperties(ItemWriter writer,
-                                           Properties submittedProps, Properties parentProps) {
-
-        //resolve all the properties used in attributes and update the JAXB model
-        writer.setRef(this.replaceAllProperties(writer.getRef(), submittedProps, parentProps));
+    public ItemWriter resolve(ItemWriter writer, List<Properties> properties) {
+    	writer.setRef(resolveReferences(writer.getRef(), properties));
 
         // Resolve all the properties defined for this artifact
         if (writer.getProperties() != null) {
-            this.resolveElementProperties(writer.getProperties().getPropertyList(), submittedProps, parentProps);
+            resolveJSLProperties(writer.getProperties(), properties);
         }
-
-        return writer;
-
+        
+    	return writer;
     }
-
 }

@@ -18,31 +18,24 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.jaxb.ItemProcessor;
 
+import java.util.List;
 import java.util.Properties;
-
 
 public class ItemProcessorPropertyResolver extends AbstractPropertyResolver<ItemProcessor> {
 
-
     public ItemProcessorPropertyResolver(boolean isPartitionStep) {
         super(isPartitionStep);
-        // TODO Auto-generated constructor stub
     }
 
     @Override
-    public ItemProcessor substituteProperties(ItemProcessor processor,
-                                              Properties submittedProps, Properties parentProps) {
-
-        //resolve all the properties used in attributes and update the JAXB model
-        processor.setRef(this.replaceAllProperties(processor.getRef(), submittedProps, parentProps));
+    public ItemProcessor resolve(ItemProcessor processor, List<Properties> properties) {
+    	processor.setRef(resolveReferences(processor.getRef(), properties));
 
         // Resolve all the properties defined for this artifact
         if (processor.getProperties() != null) {
-            this.resolveElementProperties(processor.getProperties().getPropertyList(), submittedProps, parentProps);
+            resolveJSLProperties(processor.getProperties(), properties);
         }
-
-        return processor;
-
+        
+    	return processor;
     }
-
 }

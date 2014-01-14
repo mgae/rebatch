@@ -18,8 +18,7 @@
 	version="1.0"
 	xmlns="http://xmlns.jcp.org/xml/ns/javaee"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/
-	 http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd">
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd">
 
 	<properties>
 		<property name="jobProp" value="Z"/>
@@ -30,7 +29,7 @@
 			<property name="jobProp" value="Y"/>
 		</properties>
 		
-		<batchlet ref="info.bitcrate.rebatch.test.artifacts.DummyBatchlet">
+		<batchlet ref="info.bitcrate.rebatch.test.artifacts.ExitStatusPassthruBatchlet">
 			<properties>
 				<property name="exitStatus" value="#{partitionPlan['exitStatus']}"/>
 			</properties>

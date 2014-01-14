@@ -16,9 +16,12 @@
  */
 package info.bitcrate.rebatch.container.modelresolver.impl;
 
+import info.bitcrate.rebatch.container.exception.JobSpecificationException;
 import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
 import info.bitcrate.rebatch.jaxb.Partition;
+import info.bitcrate.rebatch.jaxb.PartitionMapper;
 
+import java.util.List;
 import java.util.Properties;
 
 public class PartitionPropertyResolver extends
@@ -29,54 +32,34 @@ public class PartitionPropertyResolver extends
 	}
 
 	@Override
-	public Partition substituteProperties(
-			final Partition partition,
-			final Properties submittedProps, 
-			final Properties parentProps) {
+	public Partition resolve(Partition partition, List<Properties> properties) {
 		
-		/**
-		 * <xs:complexType name="Partition"> <xs:sequence> <xs:element
-		 * name="mapper" type="jsl:PartitionMapper" minOccurs="0" maxOccurs="1"
-		 * /> <xs:element name="plan" type="jsl:PartitionPlan" minOccurs="0"
-		 * maxOccurs="1" /> <xs:element name="collector" type="jsl:Collector"
-		 * minOccurs="0" maxOccurs="1"/> <xs:element name="analyzer"
-		 * type="jsl:Analyzer" minOccurs="0" maxOccurs="1"/> <xs:element
-		 * name="reducer " type="jsl:PartitionReducer" minOccurs="0"
-		 * maxOccurs="1"/> </xs:sequence> </xs:complexType>
-		 */
-
-		// Resolve all the properties defined for a partition
-		if (partition.getMapper() != null) {
-			PropertyResolverFactory.createPartitionMapperPropertyResolver(
-					this.isPartitionedStep).substituteProperties(
-					partition.getMapper(), submittedProps, parentProps);
+		PartitionMapper mapper = partition.getMapper();
+		
+		if (mapper != null) {
+			PropertyResolverFactory.createPartitionMapperPropertyResolver(isPartitionedStep).resolve(mapper, properties);
 		}
 
 		if (partition.getPlan() != null) {
-			PropertyResolverFactory.createPartitionPlanPropertyResolver(
-					this.isPartitionedStep).substituteProperties(
-					partition.getPlan(), submittedProps, parentProps);
+			if (mapper != null) {
+				throw new JobSpecificationException("Partition 'plan' element is mutually exclusive with 'mapper' element");
+			}
+			
+			PropertyResolverFactory.createPartitionPlanPropertyResolver(isPartitionedStep).resolve(partition.getPlan(), properties);
 		}
-
+		
 		if (partition.getCollector() != null) {
-			PropertyResolverFactory.createCollectorPropertyResolver(
-					this.isPartitionedStep).substituteProperties(
-					partition.getCollector(), submittedProps, parentProps);
+			PropertyResolverFactory.createCollectorPropertyResolver(isPartitionedStep).resolve(partition.getCollector(), properties);
 		}
-
+		
 		if (partition.getAnalyzer() != null) {
-			PropertyResolverFactory.createAnalyzerPropertyResolver(
-					this.isPartitionedStep).substituteProperties(
-					partition.getAnalyzer(), submittedProps, parentProps);
+			PropertyResolverFactory.createAnalyzerPropertyResolver(isPartitionedStep).resolve(partition.getAnalyzer(), properties);
 		}
-
+		
 		if (partition.getReducer() != null) {
-			PropertyResolverFactory.createPartitionReducerPropertyResolver(
-					this.isPartitionedStep).substituteProperties(
-					partition.getReducer(), submittedProps, parentProps);
+			PropertyResolverFactory.createPartitionReducerPropertyResolver(isPartitionedStep).resolve(partition.getReducer(), properties);
 		}
-
+		
 		return partition;
 	}
-
 }

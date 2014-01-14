@@ -18,8 +18,8 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.jaxb.Collector;
 
+import java.util.List;
 import java.util.Properties;
-
 
 public class CollectorPropertyResolver extends AbstractPropertyResolver<Collector> {
 
@@ -27,29 +27,14 @@ public class CollectorPropertyResolver extends AbstractPropertyResolver<Collecto
         super(isPartitionStep);
     }
 
+	@Override
+	public Collector resolve(Collector collector, List<Properties> properties) {
+		collector.setRef(resolveReferences(collector.getRef(), properties));
 
-    @Override
-    public Collector substituteProperties(Collector collector,
-                                          Properties submittedProps, Properties parentProps) {
-        /*
-        <xs:complexType name="Collector">
-            <xs:sequence>
-                <xs:element name="properties" type="jsl:Properties"
-                    minOccurs="0" maxOccurs="1" />
-            </xs:sequence>
-            <xs:attribute name="ref" use="required" type="jsl:artifactRef" />
-        </xs:complexType>
-        */
+		if (collector.getProperties() != null) {
+			resolveJSLProperties(collector.getProperties(), properties);
+		}
 
-        //resolve all the properties used in attributes and update the JAXB model
-        collector.setRef(this.replaceAllProperties(collector.getRef(), submittedProps, parentProps));
-
-        // Resolve all the properties defined for this artifact
-        if (collector.getProperties() != null) {
-            this.resolveElementProperties(collector.getProperties().getPropertyList(), submittedProps, parentProps);
-        }
-
-        return collector;
-    }
-
+		return collector;
+	}
 }

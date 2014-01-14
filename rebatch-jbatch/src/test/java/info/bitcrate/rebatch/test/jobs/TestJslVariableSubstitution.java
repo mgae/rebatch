@@ -34,4 +34,14 @@ public class TestJslVariableSubstitution {
 				operator.getJobExecution(executionId).getBatchStatus());
 	}
 
+	@Test
+	public void testVariableInheritance() {
+		long executionId = operator.start("variable-inheritance-test", null);
+		
+		Batches.waitForEnd(executionId);
+		
+		Assert.assertEquals(
+				"FAILED_NULL", 
+				operator.getJobExecution(executionId).getExitStatus());
+	}
 }

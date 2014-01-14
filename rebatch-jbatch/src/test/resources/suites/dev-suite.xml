@@ -18,22 +18,23 @@
 <!--
  This file is intended to be used by developers to debug on a single/few TCK(s)
 -->
-<suite name="JSR352-TCK-dev" verbose="2">
-  <listeners>
-    <listener class-name="info.bitcrate.rebatch.test.tck.lifecycle.ContainerLifecycle"/>
-  </listeners>
+<suite
+	name="JSR352-TCK-dev"
+	verbose="2">
+	<listeners>
+		<listener
+			class-name="info.bitcrate.rebatch.test.tck.lifecycle.ContainerLifecycle" />
+	</listeners>
 
-  <test name="dev">
-    <classes>
-      <class name="com.ibm.jbatch.tck.tests.jslxml.ChunkTests">
-        <methods>
-          <include name="testChunkSkipReadNoSkipChildEx"/>
-          <!--
-          <include name="testChunkRetryMultipleExceptions"/>
-          <include name="testChunkSkipMultipleExceptions"/>
-          -->
-        </methods>
-      </class>
-    </classes>
-  </test>
+	<test name="dev">
+		<classes>
+			<class name="com.ibm.jbatch.tck.tests.jslxml.PropertySubstitutionTests" />
+
+			<!-- <class name="com.ibm.jbatch.tck.tests.jslxml.PropertySubstitutionTests">
+				<methods>
+					<include name="testPropertyQuestionMarkSimple" />
+				</methods>
+			</class> -->
+		</classes>
+	</test>
 </suite>

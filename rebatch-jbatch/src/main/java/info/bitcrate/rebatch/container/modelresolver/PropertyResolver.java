@@ -16,9 +16,17 @@
 */
 package info.bitcrate.rebatch.container.modelresolver;
 
+import java.util.List;
 import java.util.Properties;
 
 public interface PropertyResolver<B> {
+	
+	B resolve(B element, Properties jobParameters);
+	
+	B resolvePartition(B element, Properties partitionPlan);
+
+	B resolve(B element, List<Properties> properties);
+	
     /**
      * Convenience method that is the same as calling substituteProperties(batchElement,
      * submittedProps, null)
@@ -26,7 +34,7 @@ public interface PropertyResolver<B> {
      * @param b
      * @param submittedProps
      */
-    public B substituteProperties(final B b, final Properties submittedProps);
+    //public B substituteProperties(final B b, final Properties submittedProps);
 
     /**
      * Performs property substitution on a given batch element b and all nested
@@ -38,7 +46,7 @@ public interface PropertyResolver<B> {
      * @param parentProps    Properties inherited from parent elements
      * @return
      */
-    public B substituteProperties(final B b, final Properties submittedProps, final Properties parentProps);
+    //public B substituteProperties(final B b, final Properties submittedProps, final Properties parentProps);
 
 
 }

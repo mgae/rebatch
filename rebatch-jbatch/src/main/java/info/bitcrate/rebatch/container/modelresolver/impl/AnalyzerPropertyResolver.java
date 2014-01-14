@@ -18,38 +18,25 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.jaxb.Analyzer;
 
+import java.util.List;
 import java.util.Properties;
 
+public class AnalyzerPropertyResolver extends
+		AbstractPropertyResolver<Analyzer> {
 
-public class AnalyzerPropertyResolver extends AbstractPropertyResolver<Analyzer> {
+	public AnalyzerPropertyResolver(boolean isPartitionStep) {
+		super(isPartitionStep);
+	}
 
-    public AnalyzerPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+	@Override
+	public Analyzer resolve(Analyzer analyzer, List<Properties> properties) {
 
+		analyzer.setRef(resolveReferences(analyzer.getRef(), properties));
 
-    @Override
-    public Analyzer substituteProperties(Analyzer analyzer, Properties submittedProps,
-                                         Properties parentProps) {
-        /*
-        <xs:complexType name="Analyzer">
-            <xs:sequence>
-                <xs:element name="properties" type="jsl:Properties"
-                    minOccurs="0" maxOccurs="1" />
-            </xs:sequence>
-            <xs:attribute name="ref" use="required" type="jsl:artifactRef" />
-        </xs:complexType>
-        */
+		if (analyzer.getProperties() != null) {
+			resolveJSLProperties(analyzer.getProperties(), properties);
+		}
 
-        //resolve all the properties used in attributes and update the JAXB model
-        analyzer.setRef(this.replaceAllProperties(analyzer.getRef(), submittedProps, parentProps));
-
-        // Resolve all the properties defined for this artifact
-        if (analyzer.getProperties() != null) {
-            this.resolveElementProperties(analyzer.getProperties().getPropertyList(), submittedProps, parentProps);
-        }
-
-        return analyzer;
-    }
-
+		return analyzer;
+	}
 }

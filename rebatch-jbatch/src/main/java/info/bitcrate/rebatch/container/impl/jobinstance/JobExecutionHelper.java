@@ -50,13 +50,26 @@ public class JobExecutionHelper {
     private static ModelNavigator<JSLJob> getResolvedJobNavigator(final String jobXml, final Properties jobParameters, final boolean parallelExecution) {
         final JSLJob jobModel = new JobModelResolver().resolveModel(jobXml);
         final PropertyResolver<JSLJob> propResolver = PropertyResolverFactory.createJobPropertyResolver(parallelExecution);
-        propResolver.substituteProperties(jobModel, jobParameters);
+        //propResolver.substituteProperties(jobModel, jobParameters);
+        propResolver.resolve(jobModel, jobParameters);
         return NavigatorFactory.createJobNavigator(jobModel);
     }
 
-    private static ModelNavigator<JSLJob> getResolvedJobNavigator(final JSLJob jobModel, final Properties jobParameters, final boolean parallelExecution) {
-        final PropertyResolver<JSLJob> propResolver = PropertyResolverFactory.createJobPropertyResolver(parallelExecution);
-        propResolver.substituteProperties(jobModel, jobParameters);
+    private static ModelNavigator<JSLJob> getResolvedJobNavigator(
+    		final JSLJob jobModel, 
+    		final Properties jobParameters, 
+    		final boolean parallelExecution) {
+    	
+        final PropertyResolver<JSLJob> propResolver = 
+        		PropertyResolverFactory.createJobPropertyResolver(parallelExecution);
+        //propResolver.substituteProperties(jobModel, jobParameters);
+        
+        if (parallelExecution) {
+            propResolver.resolvePartition(jobModel, jobParameters);
+        } else {
+            propResolver.resolve(jobModel, jobParameters);
+        }
+        
         return NavigatorFactory.createJobNavigator(jobModel);
     }
 
@@ -121,13 +134,13 @@ public class JobExecutionHelper {
         return executionHelper;
     }
 
-    public static RuntimeJobExecution startPartition(JSLJob jobModel, Properties jobParameters) throws JobStartException {
-        final ModelNavigator<JSLJob> jobNavigator = getResolvedJobNavigator(jobModel, jobParameters, true);
+    public static RuntimeJobExecution startPartition(JSLJob jobModel, Properties partitionProps) throws JobStartException {
+        final ModelNavigator<JSLJob> jobNavigator = getResolvedJobNavigator(jobModel, partitionProps, true);
         final JobContextImpl jobContext = getJobContext(jobNavigator);
 
         final JobInstance jobInstance = getNewSubJobInstance(jobNavigator.getRootModelElement().getId());
 
-        final RuntimeJobExecution executionHelper = PERSISTENCE_MANAGER_SERVICE.createJobExecution(jobInstance, jobParameters, jobContext.getBatchStatus());
+        final RuntimeJobExecution executionHelper = PERSISTENCE_MANAGER_SERVICE.createJobExecution(jobInstance, partitionProps, jobContext.getBatchStatus());
 
         executionHelper.prepareForExecution(jobContext);
 

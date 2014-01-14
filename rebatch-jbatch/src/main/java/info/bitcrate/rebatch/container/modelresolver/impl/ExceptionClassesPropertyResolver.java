@@ -18,6 +18,7 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.jaxb.ExceptionClassFilter;
 
+import java.util.List;
 import java.util.Properties;
 
 
@@ -28,43 +29,21 @@ public class ExceptionClassesPropertyResolver extends AbstractPropertyResolver<E
     }
 
     @Override
-    public ExceptionClassFilter substituteProperties(ExceptionClassFilter exceptionClassFilter,
-                                                     Properties submittedProps, Properties parentProps) {
+    public ExceptionClassFilter resolve(
+    		ExceptionClassFilter exceptionClassFilter,
+    		List<Properties> properties) {
     
-		/*
-        <xs:complexType name="ExceptionClassFilter">
-            <xs:sequence>
-                <xs:element name="include" minOccurs="0" maxOccurs="unbounded">
-                    <xs:complexType>
-                        <xs:sequence />
-                        <xs:attribute name="class" use="required" type="xs:string" />
-                    </xs:complexType>
-                </xs:element>
-                <xs:element name="exclude" minOccurs="0" maxOccurs="unbounded">
-                    <xs:complexType>
-                        <xs:sequence />
-                        <xs:attribute name="class" use="required" type="xs:string" />
-                    </xs:complexType>
-                </xs:element>
-            </xs:sequence>
-        </xs:complexType>
-		*/
-
         // Resolve ExceptionClassFilter properties
         if (exceptionClassFilter.getIncludeList() != null) {
             for (final ExceptionClassFilter.Include includeElem : exceptionClassFilter.getIncludeList()) {
-                includeElem.setClazz(this.replaceAllProperties(includeElem.getClazz(), submittedProps, parentProps));
+                includeElem.setClazz(resolveReferences(includeElem.getClazz(), properties));
             }
 
             for (final ExceptionClassFilter.Exclude excludeElem : exceptionClassFilter.getExcludeList()) {
-                excludeElem.setClazz(this.replaceAllProperties(excludeElem.getClazz(), submittedProps, parentProps));
+                excludeElem.setClazz(resolveReferences(excludeElem.getClazz(), properties));
             }
-
         }
 
         return exceptionClassFilter;
-
-
     }
-
 }

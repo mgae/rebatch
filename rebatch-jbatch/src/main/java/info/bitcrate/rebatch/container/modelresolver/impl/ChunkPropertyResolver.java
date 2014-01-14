@@ -19,94 +19,59 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
 import info.bitcrate.rebatch.jaxb.Chunk;
 
+import java.util.List;
 import java.util.Properties;
 
-
 public class ChunkPropertyResolver extends AbstractPropertyResolver<Chunk> {
-
 
     public ChunkPropertyResolver(boolean isPartitionStep) {
         super(isPartitionStep);
     }
 
     @Override
-    public Chunk substituteProperties(final Chunk chunk, final Properties submittedProps, final Properties parentProps) {
-        /*
-    <xs:complexType name="Chunk">
-        <xs:sequence>
-            <xs:element name="reader" type="jsl:ItemReader" />
-            <xs:element name="processor" type="jsl:ItemProcessor" minOccurs="0" maxOccurs="1" />
-            <xs:element name="writer" type="jsl:ItemWriter" />
-            <xs:element name="checkpoint-algorithm" type="jsl:CheckpointAlgorithm" minOccurs="0"
-                maxOccurs="1" />
-            <xs:element name="skippable-exception-classes" type="jsl:ExceptionClassFilter"
-                minOccurs="0" maxOccurs="1" />
-            <xs:element name="retryable-exception-classes" type="jsl:ExceptionClassFilter"
-                minOccurs="0" maxOccurs="1" />
-            <xs:element name="no-rollback-exception-classes" type="jsl:ExceptionClassFilter"
-                minOccurs="0" maxOccurs="1" />
-        </xs:sequence>
-        <xs:attribute name="checkpoint-policy" use="optional" type="xs:string">
- 
-        </xs:attribute>
-        <xs:attribute name="item-count" use="optional" type="xs:string">
-        </xs:attribute>
-        <xs:attribute name="time-limit" use="optional" type="xs:string">
+    public Chunk resolve(Chunk chunk, List<Properties> properties) {
 
-        </xs:attribute>
-        <xs:attribute name="skip-limit" use="optional" type="xs:string">
-        </xs:attribute>
-        <xs:attribute name="retry-limit" use="optional" type="xs:string">
-        </xs:attribute>
-    </xs:complexType>
-        */
-
-        //resolve all the properties used in attributes and update the JAXB model
-        chunk.setCheckpointPolicy(this.replaceAllProperties(chunk.getCheckpointPolicy(), submittedProps, parentProps));
-        chunk.setItemCount(this.replaceAllProperties(chunk.getItemCount(), submittedProps, parentProps));
-        chunk.setTimeLimit(this.replaceAllProperties(chunk.getTimeLimit(), submittedProps, parentProps));
-        chunk.setSkipLimit(this.replaceAllProperties(chunk.getSkipLimit(), submittedProps, parentProps));
-        chunk.setRetryLimit(this.replaceAllProperties(chunk.getRetryLimit(), submittedProps, parentProps));
+        chunk.setCheckpointPolicy(resolveReferences(chunk.getCheckpointPolicy(), properties));
+        chunk.setItemCount(resolveReferences(chunk.getItemCount(), properties));
+        chunk.setTimeLimit(resolveReferences(chunk.getTimeLimit(), properties));
+        chunk.setSkipLimit(resolveReferences(chunk.getSkipLimit(), properties));
+        chunk.setRetryLimit(resolveReferences(chunk.getRetryLimit(), properties));
 
         // Resolve Reader properties
         if (chunk.getReader() != null) {
-            PropertyResolverFactory.createReaderPropertyResolver(this.isPartitionedStep).substituteProperties(chunk.getReader(), submittedProps, parentProps);
+            PropertyResolverFactory.createReaderPropertyResolver(isPartitionedStep).resolve(chunk.getReader(), properties);
         }
 
         // Resolve Processor properties
         if (chunk.getProcessor() != null) {
-            PropertyResolverFactory.createProcessorPropertyResolver(this.isPartitionedStep).substituteProperties(chunk.getProcessor(), submittedProps, parentProps);
+            PropertyResolverFactory.createProcessorPropertyResolver(isPartitionedStep).resolve(chunk.getProcessor(), properties);
         }
 
         // Resolve Writer properties
         if (chunk.getWriter() != null) {
-            PropertyResolverFactory.createWriterPropertyResolver(this.isPartitionedStep).substituteProperties(chunk.getWriter(), submittedProps, parentProps);
+            PropertyResolverFactory.createWriterPropertyResolver(isPartitionedStep).resolve(chunk.getWriter(), properties);
         }
 
         // Resolve CheckpointAlgorithm properties
         if (chunk.getCheckpointAlgorithm() != null) {
-            PropertyResolverFactory.createCheckpointAlgorithmPropertyResolver(this.isPartitionedStep).substituteProperties(chunk.getCheckpointAlgorithm(), submittedProps, parentProps);
+            PropertyResolverFactory.createCheckpointAlgorithmPropertyResolver(isPartitionedStep).resolve(chunk.getCheckpointAlgorithm(), properties);
         }
 
         // Resolve SkippableExceptionClasses properties
         if (chunk.getSkippableExceptionClasses() != null) {
-            PropertyResolverFactory.createSkippableExceptionClassesPropertyResolver(this.isPartitionedStep).substituteProperties(chunk.getSkippableExceptionClasses(), submittedProps, parentProps);
+            PropertyResolverFactory.createSkippableExceptionClassesPropertyResolver(isPartitionedStep).resolve(chunk.getSkippableExceptionClasses(), properties);
         }
 
         // Resolve RetryableExceptionClasses properties
         if (chunk.getRetryableExceptionClasses() != null) {
-            PropertyResolverFactory.createRetryableExceptionClassesPropertyResolver(this.isPartitionedStep).substituteProperties(chunk.getRetryableExceptionClasses(), submittedProps, parentProps);
+            PropertyResolverFactory.createRetryableExceptionClassesPropertyResolver(isPartitionedStep).resolve(chunk.getRetryableExceptionClasses(), properties);
         }
 
         // Resolve NoRollbackExceptionClasses properties
         if (chunk.getNoRollbackExceptionClasses() != null) {
-            PropertyResolverFactory.createNoRollbackExceptionClassesPropertyResolver(this.isPartitionedStep).substituteProperties(chunk.getNoRollbackExceptionClasses(), submittedProps, parentProps);
+            PropertyResolverFactory.createNoRollbackExceptionClassesPropertyResolver(isPartitionedStep).resolve(chunk.getNoRollbackExceptionClasses(), properties);
         }
 
-        //FIXME There are more properties to add in here for the rest of the chunk elements
-
-        return chunk;
-
+    	return chunk;
     }
-
 }

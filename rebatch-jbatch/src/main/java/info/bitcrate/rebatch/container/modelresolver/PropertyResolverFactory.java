@@ -58,6 +58,19 @@ import info.bitcrate.rebatch.jaxb.Split;
 import info.bitcrate.rebatch.jaxb.Step;
 
 public class PropertyResolverFactory {
+	/*public static <T, R extends PropertyResolver<T>> R newInstance(
+			Class<T> klass, 
+			boolean isPartitionedStep) {
+		
+		if (klass.equals(JSLJob.class)) {
+			return (R) new JobPropertyResolver(isPartitionedStep);
+		} else if (klass.equals(Step.class)) {
+			
+		}
+			
+		return null;
+	}*/
+	
     public static PropertyResolver<JSLJob> createJobPropertyResolver(boolean isPartitionedStep) {
         return new JobPropertyResolver(isPartitionedStep);
     }

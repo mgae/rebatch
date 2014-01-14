@@ -18,31 +18,24 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.jaxb.ItemReader;
 
+import java.util.List;
 import java.util.Properties;
 
-
 public class ItemReaderPropertyResolver extends AbstractPropertyResolver<ItemReader> {
-
 
     public ItemReaderPropertyResolver(boolean isPartitionStep) {
         super(isPartitionStep);
     }
 
-
     @Override
-    public ItemReader substituteProperties(ItemReader reader,
-                                           Properties submittedProps, Properties parentProps) {
-
-        //resolve all the properties used in attributes and update the JAXB model
-        reader.setRef(this.replaceAllProperties(reader.getRef(), submittedProps, parentProps));
+    public ItemReader resolve(ItemReader reader, List<Properties> properties) {
+    	reader.setRef(resolveReferences(reader.getRef(), properties));
 
         // Resolve all the properties defined for this artifact
         if (reader.getProperties() != null) {
-            this.resolveElementProperties(reader.getProperties().getPropertyList(), submittedProps, parentProps);
+            resolveJSLProperties(reader.getProperties(), properties);
         }
-
-        return reader;
-
+        
+    	return reader;
     }
-
 }

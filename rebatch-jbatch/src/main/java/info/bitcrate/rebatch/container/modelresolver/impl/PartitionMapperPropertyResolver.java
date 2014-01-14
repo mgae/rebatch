@@ -18,44 +18,26 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.jaxb.PartitionMapper;
 
+import java.util.List;
 import java.util.Properties;
 
-
 public class PartitionMapperPropertyResolver extends
-    AbstractPropertyResolver<PartitionMapper> {
+		AbstractPropertyResolver<PartitionMapper> {
 
-    public PartitionMapperPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+	public PartitionMapperPropertyResolver(boolean isPartitionStep) {
+		super(isPartitionStep);
+	}
 
-    @Override
-    public PartitionMapper substituteProperties(PartitionMapper partitionMapper,
-                                                Properties submittedProps, Properties parentProps) {
+	@Override
+	public PartitionMapper resolve(PartitionMapper mapper,
+			List<Properties> properties) {
 
-		/*
-		<xs:complexType name="PartitionMapper">
-			<xs:sequence>
-				<xs:element name="properties" type="jsl:Properties" minOccurs="0" maxOccurs="1" />
-			</xs:sequence>
-			<xs:attribute name="ref" use="required" type="jsl:artifactRef" />
-		</xs:complexType>
-		*/
+		mapper.setRef(resolveReferences(mapper.getRef(), properties));
 
-        partitionMapper.setRef(
-        		this.replaceAllProperties(
-        				partitionMapper.getRef(), 
-        				submittedProps, 
-        				parentProps));
+		if (mapper.getProperties() != null) {
+			resolveJSLProperties(mapper.getProperties(), properties);
+		}
 
-        // Resolve all the properties defined for this step
-        if (partitionMapper.getProperties() != null) {
-            resolveElementProperties(
-            		partitionMapper.getProperties().getPropertyList(), 
-            		submittedProps, 
-            		parentProps);
-        }
-
-        return partitionMapper;
-    }
-
+		return mapper;
+	}
 }

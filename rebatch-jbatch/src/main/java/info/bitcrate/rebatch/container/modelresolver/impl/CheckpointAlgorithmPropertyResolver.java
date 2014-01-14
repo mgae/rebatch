@@ -18,29 +18,24 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.jaxb.CheckpointAlgorithm;
 
+import java.util.List;
 import java.util.Properties;
 
-
 public class CheckpointAlgorithmPropertyResolver extends AbstractPropertyResolver<CheckpointAlgorithm> {
-
 
     public CheckpointAlgorithmPropertyResolver(boolean isPartitionStep) {
         super(isPartitionStep);
     }
 
-    @Override
-    public CheckpointAlgorithm substituteProperties(final CheckpointAlgorithm checkpointalgorithm, final Properties submittedProps, final Properties parentProps) {
+	@Override
+	public CheckpointAlgorithm resolve(CheckpointAlgorithm algorithm, List<Properties> properties) {
 
-        //resolve all the properties used in attributes and update the JAXB model
-        checkpointalgorithm.setRef(this.replaceAllProperties(checkpointalgorithm.getRef(), submittedProps, parentProps));
+		algorithm.setRef(resolveReferences(algorithm.getRef(), properties));
 
-        // Resolve all the properties defined for this checkpoint algorithm
-        if (checkpointalgorithm.getProperties() != null) {
-            this.resolveElementProperties(checkpointalgorithm.getProperties().getPropertyList(), submittedProps, parentProps);
-        }
+		if (algorithm.getProperties() != null) {
+			resolveJSLProperties(algorithm.getProperties(), properties);
+		}
 
-        return checkpointalgorithm;
-
-    }
-
+		return algorithm;
+	}
 }

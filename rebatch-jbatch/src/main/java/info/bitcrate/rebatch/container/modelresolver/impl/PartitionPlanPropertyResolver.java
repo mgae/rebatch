@@ -22,45 +22,34 @@ import info.bitcrate.rebatch.jaxb.PartitionPlan;
 import java.util.List;
 import java.util.Properties;
 
-
 public class PartitionPlanPropertyResolver extends
-    AbstractPropertyResolver<PartitionPlan> {
+		AbstractPropertyResolver<PartitionPlan> {
 
-    public PartitionPlanPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+	public PartitionPlanPropertyResolver(boolean isPartitionStep) {
+		super(isPartitionStep);
+	}
 
-    @Override
-    public PartitionPlan substituteProperties(PartitionPlan partitionPlan,
-                                              Properties submittedProps, Properties parentProps) {
-    
-		/*
-        <xs:complexType name="PartitionPlan">
-			<xs:sequence>
-				<xs:element name="properties" type="jsl:Properties" minOccurs="0" maxOccurs="unbounded" />
-			</xs:sequence>
-			<xs:attribute name="instances" use="optional" type="xs:string" />
-			<xs:attribute name="threads" use="optional" type="xs:string" />
-		</xs:complexType>
-		*/
+	@Override
+	public PartitionPlan resolve(PartitionPlan plan, List<Properties> properties) {
 
-        partitionPlan.setPartitions(this.replaceAllProperties(partitionPlan.getPartitions(), submittedProps, parentProps));
-        partitionPlan.setThreads(this.replaceAllProperties(partitionPlan.getThreads(), submittedProps, parentProps));
+		plan.setPartitions(resolveReferences(plan.getPartitions(), properties));
+		plan.setThreads(resolveReferences(plan.getThreads(), properties));
 
-        // Resolve all the properties defined for this plan
-        List<JSLProperties> jslProps = partitionPlan.getProperties();
+		List<JSLProperties> jslPropertiesList = plan.getProperties();
 
-        if (jslProps != null) { //This will never be null with JAXB-generated class
-            for (JSLProperties jslProp : jslProps) {
-                //for partition properties perform substitution on the partition attribute
-                if (jslProp.getPartition() != null) {
-                    jslProp.setPartition(replaceAllProperties(jslProp.getPartition(), submittedProps, parentProps));
-                }
-                
-                resolveElementProperties(jslProp.getPropertyList(), submittedProps, parentProps);
-            }
-        }
+		if (jslPropertiesList != null) {
+			for (JSLProperties jslProperties : jslPropertiesList) {
+				// for partition properties perform substitution on the
+				// partition attribute
+				if (jslProperties.getPartition() != null) {
+					jslProperties.setPartition(resolveReferences(
+							jslProperties.getPartition(), properties));
+				}
 
-        return partitionPlan;
-    }
+				resolveJSLProperties(jslProperties, properties);
+			}
+		}
+
+		return plan;
+	}
 }

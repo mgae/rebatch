@@ -13,10 +13,26 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<job id="jmx" version="1.0" xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<job
+	id="variable-inheritance-test"
+	version="1.0"
+	xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd">
-  <step id="jmx-step">
-    <batchlet ref="info.bitcrate.rebatch.test.mock.BatchletMock"/>
-  </step>
+
+	<properties>
+		<property name="exitStatus" value="Z"/>
+	</properties>
+
+	<step id="partitioned-step">
+		<properties>
+		</properties>
+
+		<batchlet ref="info.bitcrate.rebatch.test.artifacts.ExitStatusPassthruBatchlet">
+			<properties>
+			</properties>
+		</batchlet>
+
+		<fail on="null" exit-status="FAILED_NULL" />
+	</step>
 </job>

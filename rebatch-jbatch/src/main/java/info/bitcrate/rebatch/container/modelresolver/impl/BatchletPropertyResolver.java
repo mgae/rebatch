@@ -18,28 +18,24 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.jaxb.Batchlet;
 
+import java.util.List;
 import java.util.Properties;
 
-
 public class BatchletPropertyResolver extends AbstractPropertyResolver<Batchlet> {
-
 
     public BatchletPropertyResolver(boolean isPartitionStep) {
         super(isPartitionStep);
     }
 
-    @Override
-    public Batchlet substituteProperties(final Batchlet batchlet, final Properties submittedProps, final Properties parentProps) {
+	@Override
+	public Batchlet resolve(Batchlet batchlet, List<Properties> properties) {
 
-        //resolve all the properties used in attributes and update the JAXB model
-        batchlet.setRef(replaceAllProperties(batchlet.getRef(), submittedProps, parentProps));
+		batchlet.setRef(resolveReferences(batchlet.getRef(), properties));
 
-        // Resolve all the properties defined for this batchlet
-        if (batchlet.getProperties() != null) {
-            resolveElementProperties(batchlet.getProperties().getPropertyList(), submittedProps, parentProps);
-        }
+		if (batchlet.getProperties() != null) {
+			resolveJSLProperties(batchlet.getProperties(), properties);
+		}
 
-        return batchlet;
-    }
-
+		return batchlet;
+	}
 }

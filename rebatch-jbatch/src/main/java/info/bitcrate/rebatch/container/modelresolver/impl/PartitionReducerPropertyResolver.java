@@ -18,6 +18,7 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.jaxb.PartitionReducer;
 
+import java.util.List;
 import java.util.Properties;
 
 
@@ -28,28 +29,18 @@ public class PartitionReducerPropertyResolver extends
         super(isPartitionStep);
     }
 
-
     @Override
-    public PartitionReducer substituteProperties(PartitionReducer reducer,
-                                                 Properties submittedProps, Properties parentProps) {
-        /*
-        <xs:complexType name="Collector">
-            <xs:sequence>
-                <xs:element name="properties" type="jsl:Properties" minOccurs="0" maxOccurs="1" />
-            </xs:sequence>
-            <xs:attribute name="ref" use="required" type="jsl:artifactRef" />
-        </xs:complexType>
-        */
+    public PartitionReducer resolve(
+    		PartitionReducer reducer,
+    		List<Properties> properties) {
 
-        //resolve all the properties used in attributes and update the JAXB model
-        reducer.setRef(this.replaceAllProperties(reducer.getRef(), submittedProps, parentProps));
+        reducer.setRef(resolveReferences(reducer.getRef(), properties));
 
         // Resolve all the properties defined for this artifact
         if (reducer.getProperties() != null) {
-            this.resolveElementProperties(reducer.getProperties().getPropertyList(), submittedProps, parentProps);
+        	resolveJSLProperties(reducer.getProperties(), properties);
         }
 
-        return reducer;
+    	return reducer;
     }
-
 }

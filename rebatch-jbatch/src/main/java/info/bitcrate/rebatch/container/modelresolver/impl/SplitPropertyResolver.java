@@ -20,6 +20,7 @@ import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
 import info.bitcrate.rebatch.jaxb.Flow;
 import info.bitcrate.rebatch.jaxb.Split;
 
+import java.util.List;
 import java.util.Properties;
 
 public class SplitPropertyResolver extends AbstractPropertyResolver<Split> {
@@ -30,18 +31,15 @@ public class SplitPropertyResolver extends AbstractPropertyResolver<Split> {
     }
 
     @Override
-    public Split substituteProperties(final Split split, final Properties submittedProps, final Properties parentProps) {
-        // resolve all the properties used in attributes and update the JAXB model
-        split.setId(this.replaceAllProperties(split.getId(), submittedProps, parentProps));
-        split.setNextFromAttribute(this.replaceAllProperties(split.getNextFromAttribute(), submittedProps, parentProps));
+    public Split resolve(Split split, List<Properties> properties) {
+        split.setId(resolveReferences(split.getId(), properties));
+        split.setNextFromAttribute(resolveReferences(split.getNextFromAttribute(), properties));
 
         // Resolve all the properties defined for this step
-        Properties currentProps = parentProps;
-        for (final Flow flow : split.getFlows()) {
-            PropertyResolverFactory.createFlowPropertyResolver(this.isPartitionedStep).substituteProperties(flow, submittedProps, currentProps);
+        for (Flow flow : split.getFlows()) {
+            PropertyResolverFactory.createFlowPropertyResolver(this.isPartitionedStep).resolve(flow, properties);
         }
-
-        return split;
+        
+    	return split;
     }
-
 }

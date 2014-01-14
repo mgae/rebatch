@@ -13,32 +13,29 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.jaxb.Listener;
 
+import java.util.List;
 import java.util.Properties;
 
+public class ListenerPropertyResolver extends
+		AbstractPropertyResolver<Listener> {
 
-public class ListenerPropertyResolver extends AbstractPropertyResolver<Listener> {
+	public ListenerPropertyResolver(boolean isPartitionStep) {
+		super(isPartitionStep);
+	}
 
+	@Override
+	public Listener resolve(Listener listener, List<Properties> properties) {
+		listener.setRef(resolveReferences(listener.getRef(), properties));
 
-    public ListenerPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+		if (listener.getProperties() != null) {
+			resolveJSLProperties(listener.getProperties(), properties);
+		}
 
-    @Override
-    public Listener substituteProperties(final Listener listener, final Properties submittedProps, final Properties parentProps) {
-        //resolve all the properties used in attributes and update the JAXB model
-        listener.setRef(this.replaceAllProperties(listener.getRef(), submittedProps, parentProps));
-
-        // Resolve all the properties defined for this listener
-        if (listener.getProperties() != null) {
-            this.resolveElementProperties(listener.getProperties().getPropertyList(), submittedProps, parentProps);
-        }
-
-        return listener;
-    }
-
+		return listener;
+	}
 }

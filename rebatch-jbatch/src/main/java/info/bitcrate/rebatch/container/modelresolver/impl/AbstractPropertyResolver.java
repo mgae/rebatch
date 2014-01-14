@@ -16,383 +16,347 @@
 */
 package info.bitcrate.rebatch.container.modelresolver.impl;
 
+import info.bitcrate.rebatch.container.exception.IllegalBatchPropertyException;
 import info.bitcrate.rebatch.container.modelresolver.PropertyResolver;
+import info.bitcrate.rebatch.jaxb.JSLProperties;
 import info.bitcrate.rebatch.jaxb.Property;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
 public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B> {
 
+	static final int PROPERTY_SYSTEM = 0;
+	static final int PROPERTY_JOB_PARAMETER = 1;
+	static final int PROPERTY_JOB = 2;
+	static final int PROPERTY_STEP = 3;
+	static final int PROPERTY_PARTITION = 4;
+	
+	private static final String EXPR_BEGIN = "#{";
+	private static final String EXPR_END = "}";
+
+	private static final String PROP_NAME_BEGIN = "['";
+	private static final String PROP_NAME_END = "']";
+	
+	private static final String DEFAULT_BEGIN = "?:";
+	private static final String DEFAULT_END = ";";
+	
+	private enum ExpressionType {
+		SYSTEM_PROPERTIES("systemProperties", PROPERTY_SYSTEM),
+		JOB_PARAMETERS("jobParameters", PROPERTY_JOB_PARAMETER),
+		JOB_PROPERTIES("jobProperties", PROPERTY_JOB),
+		PARTITION_PLAN("partitionPlan", PROPERTY_PARTITION);
+		
+		final int index;
+		final String referenceName;
+		final int baseLength;
+		
+		ExpressionType(String referenceName, int index) {
+			this.index = index;
+			this.referenceName = referenceName;
+			this.baseLength = 
+					EXPR_BEGIN.length() + 
+					referenceName.length() +
+					PROP_NAME_BEGIN.length() +
+					PROP_NAME_END.length() +
+					EXPR_END.length();
+		}
+		
+		static ExpressionType forReferenceName(String referenceName) {
+			for (ExpressionType referenceType : values()) {
+				if (referenceType.referenceName.equals(referenceName)) {
+					return referenceType;
+				}
+			}
+			
+			return null;
+		}
+	}
+	
     protected boolean isPartitionedStep = false;
 
-    public static final String UNRESOLVED_PROP_VALUE = ""; //Substitute empty String for unresolvable props
-
+    //Substitute empty String for unresolvable props
+    public static final String UNRESOLVED_PROP_VALUE = "";
+    
     public AbstractPropertyResolver(boolean isPartitionStep) {
         this.isPartitionedStep = isPartitionStep;
     }
 
-    /*
-     * Convenience method that is the same as calling substituteProperties(job,
-     * submittedProps, null)
-     */
-    public B substituteProperties(final B b, final Properties submittedProps) {
-
-        return this.substituteProperties(b, submittedProps, null);
-
+    @Override
+    public B resolve(final B element, Properties jobParameters) {
+    	List<Properties> properties = new ArrayList<Properties>(4);
+    	
+    	if (jobParameters == null) {
+    		jobParameters = new Properties();
+    	}
+    	
+    	properties.add(PROPERTY_SYSTEM, System.getProperties());
+    	properties.add(PROPERTY_JOB_PARAMETER , jobParameters);
+    	properties.add(PROPERTY_JOB, null);
+    	properties.add(PROPERTY_STEP, null);
+    	properties.add(PROPERTY_PARTITION, null);
+    	
+    	return resolve(element, properties);
     }
+    
+    @Override
+    public final B resolvePartition(B element, Properties partitionPlan) {
+    	List<Properties> properties = new ArrayList<Properties>(4);
+    	
+    	properties.add(PROPERTY_SYSTEM, System.getProperties());
+    	properties.add(PROPERTY_JOB_PARAMETER , null);
+    	properties.add(PROPERTY_JOB, null);
+    	properties.add(PROPERTY_STEP, null);
+    	properties.add(PROPERTY_PARTITION, partitionPlan);
+    	
+    	return resolve(element, properties);
+	}
 
+    protected void resolveJSLProperties(
+    		final JSLProperties jslProperties,
+    		final List<Properties> properties,
+    		final Properties addedScope) {
 
-    private enum PROPERTY_TYPE {
-        JOB_PARAMETERS, SYSTEM_PROPERTIES, JOB_PROPERTIES, PARTITION_PROPERTIES
+    	for (final Property jslProperty : jslProperties.getPropertyList()) {
+    		String name = resolveReferences(jslProperty.getName(), properties);
+    		String value = resolveReferences(jslProperty.getValue(), properties);
+    		
+            // Update JAXB model
+    		jslProperty.setName(name);
+    		jslProperty.setValue(value);
+    		
+    		if (addedScope != null) {
+    			/*-
+    			 *  If a new scope is in the process of coming into being, add
+    			 *  the properties as we go so that they can be referenced 
+    			 *  by subsequent properties of this same JSL properties 
+    			 *  element.
+    			 */
+    			addedScope.put(name, value);
+    		}
+    	}
     }
-
-
+    
     /**
-     * @param elementProperties xml properties that are direct children of the current element
-     * @param submittedProps    submitted job properties
-     * @param parentProps       resolved parent properties
-     * @return the properties associated with this elements scope
+     * @param jslProperties 
+     * 			JSL properties that are direct children of the current element
+     * @param properties 
+     * 			Resolved properties from all scopes available to the current
+     * 			element
      */
-    protected Properties resolveElementProperties(
-        final List<Property> elementProperties,
-        final Properties submittedProps, final Properties parentProps) {
-
-        Properties currentXMLProperties = new Properties();
-
-        currentXMLProperties = this.inheritProperties(parentProps, currentXMLProperties);
-
-        for (final Property prop : elementProperties) {
-            String name = prop.getName();
-
-            name = this.replaceAllProperties(name, submittedProps, currentXMLProperties);
-
-            String value = prop.getValue();
-            value = this.replaceAllProperties(value, submittedProps, currentXMLProperties);
-
-            // add resolved properties to current properties
-            currentXMLProperties.setProperty(name, value);
-
-            // update JAXB model
-            prop.setName(name);
-            prop.setValue(value);
-        }
-        return currentXMLProperties;
-
+    protected void resolveJSLProperties(
+    		final JSLProperties jslProperties,
+    		final List<Properties> properties) {
+    	
+    	resolveJSLProperties(jslProperties, properties, null);
     }
-
-    /**
-     * Replace all the properties in String str.
-     *
-     * @param str
-     * @param submittedProps
-     * @param xmlProperties
-     * @return
-     */
-    protected String replaceAllProperties(String str,
-                                          final Properties submittedProps, final Properties xmlProperties) {
-
-        int startIndex = 0;
-        NextProperty nextProp = this.findNextProperty(str, startIndex);
-
-
-        while (nextProp != null) {
-
-            // get the start index past this property for the next property in
-            // the string
-            //startIndex = this.getEndIndexOfNextProperty(str, startIndex);
-            startIndex = nextProp.endIndex;
-
-            // resolve the property
-            String nextPropValue = this.resolvePropertyValue(nextProp.propName, nextProp.propType, submittedProps, xmlProperties);
-
-            //if the property didn't resolve use the default value if it exists
-            if (nextPropValue.equals(UNRESOLVED_PROP_VALUE)) {
-                if (nextProp.defaultValueExpression != null) {
-                    nextPropValue = this.replaceAllProperties(nextProp.defaultValueExpression, submittedProps, xmlProperties);
-                }
-            }
-
-
-            // After we get this value the lenght of the string might change so
-            // we need to reset the start index
-            int lengthDifference = 0;
-            switch (nextProp.propType) {
-
-                case JOB_PARAMETERS:
-                    lengthDifference = nextPropValue.length() - (nextProp.propName.length() + "#{jobParameters['']}".length()); // this can be a negative value
-                    startIndex = startIndex + lengthDifference; // move start index for next property
-                    str = str.replace("#{jobParameters['" + nextProp.propName + "']}" + nextProp.getDefaultValExprWithDelimitersIfExists(), nextPropValue);
-                    break;
-                case JOB_PROPERTIES:
-                    lengthDifference = nextPropValue.length() - (nextProp.propName.length() + "#{jobProperties['']}".length()); // this can be a negative value
-                    startIndex = startIndex + lengthDifference; // move start index for next property
-                    str = str.replace("#{jobProperties['" + nextProp.propName + "']}" + nextProp.getDefaultValExprWithDelimitersIfExists(), nextPropValue);
-                    break;
-                case SYSTEM_PROPERTIES:
-                    lengthDifference = nextPropValue.length() - (nextProp.propName.length() + "#{systemProperties['']}".length()); // this can be a negative value
-                    startIndex = startIndex + lengthDifference; // move start index for next property
-                    str = str.replace("#{systemProperties['" + nextProp.propName + "']}" + nextProp.getDefaultValExprWithDelimitersIfExists(), nextPropValue);
-                    break;
-                case PARTITION_PROPERTIES:
-                    lengthDifference = nextPropValue.length() - (nextProp.propName.length() + "#{partitionPlan['']}".length()); // this can be a negative value
-                    startIndex = startIndex + lengthDifference; // move start index for next property
-                    str = str.replace("#{partitionPlan['" + nextProp.propName + "']}" + nextProp.getDefaultValExprWithDelimitersIfExists(), nextPropValue);
-                    break;
-
-            }
-
-            // find the next property
-            nextProp = this.findNextProperty(str, startIndex);
-        }
-
-        return str;
+    
+    protected static Properties toProperties(
+    		final JSLProperties jslProperties) {
+    	
+    	Properties properties = new Properties();
+    	
+    	for (final Property jslProperty : jslProperties.getPropertyList()) {
+    		String name = jslProperty.getName();
+    		String value = jslProperty.getValue();
+    		
+    		properties.put(name, value);
+    	}
+    	
+    	return properties;
     }
+    
+    class PropertyReference {
+    	final String name;
+    	final ExpressionType type;
+    	final String defaultValueExpression;
 
-    /**
-     * Gets the value of a property using the property type
-     * <p/>
-     * If the property 'propname' is not defined  the String 'null' (without quotes) is returned as the
-     * value
-     *
-     * @param name
-     * @return
-     */
-    private String resolvePropertyValue(
-    		final String name, 
-    		PROPERTY_TYPE propType,
-    		final Properties submittedProperties, 
-    		final Properties xmlProperties) {
-
-        String value = null;
-
-		switch (propType) {
-		case JOB_PARAMETERS:
-			if (submittedProperties != null) {
-				value = submittedProperties.getProperty(name);
-			}
-			
-			if (value != null) {
-				return value;
-			}
-			
-			break;
-			
-		case JOB_PROPERTIES:
-			if (xmlProperties != null) {
-				value = xmlProperties.getProperty(name);
-			}
-			
-			if (value != null) {
-				return value;
-			}
-			
-			break;
-			
-		case SYSTEM_PROPERTIES:
-			value = System.getProperty(name);
-			
-			if (value != null) {
-				return value;
-			}
-			
-			break;
-			
-		case PARTITION_PROPERTIES: // We are reusing the submitted props to
-									// carry the partition props
-			if (submittedProperties != null) {
-				value = submittedProperties.getProperty(name);
-			}
-			
-			if (value != null) {
-				return value;
-			}
-			
-			break;
+    	public PropertyReference(
+    			String name, 
+    			ExpressionType type, 
+    			String defaultValueExpression) {
+    		this.name = name;
+    		this.type = type;
+    		this.defaultValueExpression = defaultValueExpression;
 		}
-
-        return UNRESOLVED_PROP_VALUE;
-
-    }
-
-    /**
-     * Merge the parent properties that are already set into the child
-     * properties. Child properties always override parent values.
-     *
-     * @param parentProps A set of already resolved parent properties
-     * @param childProps  A set of already resolved child properties
-     * @return
-     */
-    private Properties inheritProperties(final Properties parentProps,
-                                         final Properties childProps) {
-        if (parentProps == null) {
-            return childProps;
+    	
+    	boolean isActive() {
+    		return type != ExpressionType.PARTITION_PLAN || isPartitionedStep;
+    	}
+    	
+    	int getLength() {
+    		return name.length() + 
+    				type.baseLength + 
+    				((defaultValueExpression != null) ? 
+    						defaultValueExpression.length() + 
+    						DEFAULT_BEGIN.length() + 
+    						DEFAULT_END.length() : 0);
+    	}
+    	
+    	int getLengthPlusDefaultValExpr() {
+    		return getLength() + getDefaultValExprWithDelimiters().length();
+    	}
+    	
+        String getValExpr() {
+        	return EXPR_BEGIN + 
+        			type.referenceName + 
+        			PROP_NAME_BEGIN + 
+        			name + 
+        			PROP_NAME_END + 
+        			EXPR_END;
         }
-
-        if (childProps == null) {
-            return parentProps;
-        }
-
-        for (final String parentKey : parentProps.stringPropertyNames()) {
-
-            // Add the parent property to the child if the child does not
-            // already define it
-            if (!childProps.containsKey(parentKey)) {
-                childProps.setProperty(parentKey, parentProps
-                    .getProperty(parentKey));
-            }
-        }
-
-        return childProps;
-
-    }
-
-    /**
-     * A helper method to the get the index of the '}' character in the given
-     * String str with a valid property substitution. A valid property looks
-     * like ${batch.property}
-     *
-     * @param str        The string to search.
-     * @param startIndex The index in str to start the search.
-     * @return The index of the '}' character or -1 if no valid property is
-     * found in str.
-     */
-    /*private int getEndIndexOfNextProperty(final String str, final int startIndex) {
-        if (str == null) {
-            return -1;
-        }
-
-        final int startPropIndex = str.indexOf("${", startIndex);
-
-        // we didn't find a property in this string
-        if (startPropIndex == -1) {
-            return -1;
-        }
-
-        final int endPropIndex = str.indexOf("}", startPropIndex);
-        // This check allows something like this "Some filename is ${}"
-        // Maybe we should require "${f}" ???
-        if (endPropIndex > startPropIndex) {
-            return endPropIndex;
-        }
-
-        // if no variables like ${prop1} are in string, return null
-        return -1;
-    }*/
-
-    /**
-     * A helper method to the get the next property in the given String str with
-     * a valid property substitution. A valid property looks like
-     * #{jobParameter['batch.property']}. This method will return only the name
-     * of the property found without the surrounding metadata.
-     * <p/>
-     * Example:
-     *
-     * @param str        The string to search.
-     * @param startIndex The index in str to start the search.
-     * @return The name of the next property found without the starting
-     * #{<propertyType>[' or ending ']}
-     */
-    private NextProperty findNextProperty(final String str, final int startIndex) {
-
-        if (str == null) {
-            return null;
-        }
-
-
-        final int startPropIndex = str.indexOf("#{", startIndex);
-        if (startPropIndex == -1) {
-            return null;
-        }
-
-
-        //FIXME We may want to throw a more helpful exception here to say there was probably a typo.
-        PROPERTY_TYPE type = null;
-        if (str.startsWith("#{jobParameters['", startPropIndex)) {
-            type = PROPERTY_TYPE.JOB_PARAMETERS;
-        } else if (str.startsWith("#{systemProperties['", startPropIndex)) {
-            type = PROPERTY_TYPE.SYSTEM_PROPERTIES;
-        } else if (str.startsWith("#{jobProperties['", startPropIndex)) {
-            type = PROPERTY_TYPE.JOB_PROPERTIES;
-        } else if (isPartitionedStep && str.startsWith("#{partitionPlan['", startPropIndex)) {
-        	/*-
-        	 * Partition plan properties will only be resolved once the subjob 
-        	 * is created and the partition mapper (if present) has completed
-        	 */
-            type = PROPERTY_TYPE.PARTITION_PROPERTIES;
-        }
-
-        if (type == null) {
-            return null;
-        }
-
-        final int endPropIndex = str.indexOf("']}");
-
-        // This check allows something like this "Some filename is ${jobParameters['']}"
-        // Maybe we should require "${f}" ???
-
-        String propName = null;
-        String defaultPropExpression = null;
-        if (endPropIndex > startPropIndex) {
-            //look for the ?:<default-value-expression>; syntax after the property to see if it has a default value
-            if (str.startsWith("?:", endPropIndex + "']}".length())) {
-                //find the end of the defaulting string
-                int tempEndPropIndex = str.indexOf(";", endPropIndex + "']}?:".length());
-                if (tempEndPropIndex == -1) {
-                    throw new IllegalArgumentException("The default property expression is not properly terminated with ';'");
-                }
-                //this string does not include the ?: and ; It only contains the content in between
-                defaultPropExpression = str.substring(endPropIndex + "]}?:".length() + 1, tempEndPropIndex);
-            }
-
-            if (type.equals(PROPERTY_TYPE.JOB_PARAMETERS)) {
-                propName = str.substring(startPropIndex + "#{jobParameters['".length(), endPropIndex);
-            }
-
-            if (type.equals(PROPERTY_TYPE.JOB_PROPERTIES)) {
-                propName = str.substring(startPropIndex + "#{jobProperties['".length(), endPropIndex);
-            }
-
-            if (type.equals(PROPERTY_TYPE.SYSTEM_PROPERTIES)) {
-                propName = str.substring(startPropIndex + "#{systemProperties['".length(), endPropIndex);
-            }
-
-            if (type.equals(PROPERTY_TYPE.PARTITION_PROPERTIES)) {
-                propName = str.substring(startPropIndex + "#{partitionPlan['".length(), endPropIndex);
-            }
-
-            return new NextProperty(propName, type, startPropIndex, endPropIndex, defaultPropExpression);
-
-        }
-
-        // if no variables like #{jobProperties['prop1']} are in string, return null
-        return null;
-    }
-
-    class NextProperty {
-
-        final String propName;
-        final PROPERTY_TYPE propType;
-        final int startIndex;
-        final int endIndex;
-        final String defaultValueExpression;
-
-
-        NextProperty(String propName, PROPERTY_TYPE propType, int startIndex, int endIndex, String defaultValueExpression) {
-            this.propName = propName;
-            this.propType = propType;
-            this.startIndex = startIndex;
-            this.endIndex = endIndex;
-            this.defaultValueExpression = defaultValueExpression;
-        }
-
-        String getDefaultValExprWithDelimitersIfExists() {
-            if (this.defaultValueExpression != null) {
-                return "?:" + this.defaultValueExpression + ";";
+    	
+        String getDefaultValExprWithDelimiters() {
+            if (defaultValueExpression != null) {
+                return DEFAULT_BEGIN + defaultValueExpression + DEFAULT_END;
             }
 
             return "";
         }
+    }
+    
+    protected String resolveReferences(
+    		String jslValue, 
+    		final List<Properties> properties) {
+    	
+    	int index = 0;
+    	PropertyReference reference = null;
+    	int count = 0;
+    	
+    	while ((reference = nextReference(jslValue, index)) != null) {
+    		if (!reference.isActive()) {
+    			/*-
+    			 * References to partition plan properties are not active 
+    			 * during the first attempt to resolve values. Partition
+    			 * plans are resolved when the sub-jobs for each partition is
+    			 * started by the runtime.
+    			 */
+    			index += reference.getLengthPlusDefaultValExpr();
+    			if (++count > 100) {
+    				throw new IllegalStateException("infinite loop");
+    			}
+    			continue;
+    		}
+    		
+    		String value = resolveReference(reference, properties);
+    	
+            //if the property didn't resolve use the default value if it exists
+            if (value.equals(UNRESOLVED_PROP_VALUE)) {
+                if (reference.defaultValueExpression != null) {
+                    value = resolveReferences(
+                    		reference.defaultValueExpression, properties);
+                }
+            }
+            
+            jslValue = jslValue.replace(
+            		reference.getValExpr() + 
+            		reference.getDefaultValExprWithDelimiters(), value);
 
+            index += (value.length() - reference.getLength());
+    	}
+    	
+    	return jslValue;
+    }
+    
+    private PropertyReference nextReference(
+    		final String jslValue, 
+    		final int startIndex) {
+    	
+        if (jslValue == null) {
+            return null;
+        }
+
+        final int exprStart = jslValue.indexOf(EXPR_BEGIN, startIndex);
+        
+        if (exprStart == -1) {
+            return null;
+        }
+        
+        final int exprNameStart = exprStart + EXPR_BEGIN.length();
+        final int exprNameEnd = jslValue.indexOf(PROP_NAME_BEGIN, exprNameStart);
+        
+        if (exprNameEnd == -1) {
+    		throw new IllegalBatchPropertyException(
+    				"Incorrectly formatted property reference, "
+    				+ "missing map access \"['\": " 
+					+ jslValue.substring(startIndex));
+        }
+        
+        final int propNameStart = exprNameEnd + PROP_NAME_BEGIN.length();
+        final int propNameEnd = jslValue.indexOf(PROP_NAME_END, propNameStart);
+
+        if (propNameEnd == -1) {
+    		throw new IllegalBatchPropertyException(
+    				"Incorrectly formatted property reference, "
+    				+ "missing property delimiter \"']\": " 
+					+ jslValue.substring(startIndex));
+        }
+        
+        final int exprEnd = propNameEnd + PROP_NAME_END.length();
+        
+        if (!jslValue.startsWith(EXPR_END, exprEnd)) {
+    		throw new IllegalBatchPropertyException(
+    				"Property expression missing '}' delimiter: " 
+					+ jslValue.substring(startIndex));
+        }
+
+        final String refName = jslValue.substring(exprNameStart, exprNameEnd);
+        final ExpressionType type = ExpressionType.forReferenceName(refName);
+        
+        if (type == null) {
+    		throw new IllegalBatchPropertyException(
+    				"Unknown property reference name: " + refName);
+        }
+        
+        final String propName = jslValue.substring(propNameStart, propNameEnd);
+        String defaultValueExpression = null;
+
+        /*-
+         * Look for the ?:<default-value-expression>; syntax after the 
+         * property to see if it has a default value
+         */
+        final int defaultExprFlag = exprEnd + EXPR_END.length();
+
+        if (jslValue.startsWith(DEFAULT_BEGIN, defaultExprFlag)) {
+            int defaultExprStart = defaultExprFlag + DEFAULT_BEGIN.length();
+        	int defaultExprEnd = jslValue.indexOf(DEFAULT_END, defaultExprStart);
+        	
+            if (defaultExprEnd == -1) {
+                throw new IllegalArgumentException(
+                		"The default property expression " 
+        				+ jslValue.substring(defaultExprStart)
+						+ " is not properly terminated with ';'");
+            }
+            
+            /*-
+             * This string does not include the '?:' and ';' 
+             * It only contains the content in between.
+             */
+            defaultValueExpression = 
+            		jslValue.substring(defaultExprStart, defaultExprEnd);
+        }
+        
+        return new PropertyReference(propName, type, defaultValueExpression);
+	}
+    
+    private String resolveReference(
+    		final PropertyReference reference,
+    		final List<Properties> properties) {
+    	
+    	Properties referencedProperties = properties.get(reference.type.index);
+    	
+    	if (referencedProperties == null) {
+    		throw new IllegalBatchPropertyException(
+    				"Referenced " + reference.type.referenceName + "property '" + reference.name + 
+    				"' is not in scope at point of reference");
+    	}
+    	
+    	String value = 
+    			referencedProperties.getProperty(
+    					reference.name, 
+    					UNRESOLVED_PROP_VALUE);
+    	
+    	return value;
     }
 }

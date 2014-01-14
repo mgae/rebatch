@@ -56,14 +56,14 @@
 			<version>1.0</version>
 			<scope>provided</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.apache.geronimo.components</groupId>
 			<artifactId>geronimo-transaction</artifactId>
 			<version>3.1.1</version>
 			<scope>provided</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.apache.geronimo.specs</groupId>
 			<artifactId>geronimo-jpa_2.0_spec</artifactId>
@@ -72,34 +72,78 @@
 		</dependency>
 
 		<!-- Testing libraries -->
+		<dependency>
+			<groupId>com.ibm.jbatch</groupId>
+			<artifactId>com.ibm.jbatch-tck</artifactId>
+			<version>1.0</version>
+			<scope>test</scope>
+
+			<exclusions>
+				<exclusion>
+					<groupId>com.ibm.jbatch</groupId>
+					<artifactId>com.ibm.jbatch-runtime</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.ibm.jbatch</groupId>
+					<artifactId>com.ibm.jbatch-model</artifactId>
+				</exclusion>
+				<exclusion>
+					<artifactId>com.ibm.jbatch-ri-spi</artifactId>
+					<groupId>com.ibm.jbatch</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
 		<dependency> <!-- TCK and default tests -->
 			<groupId>org.testng</groupId>
 			<artifactId>testng</artifactId>
 			<version>6.8.7</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency> <!-- camel/arquillian -->
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.apache.derby</groupId>
 			<artifactId>derby</artifactId>
 			<version>10.10.1.1</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.apache.openejb</groupId>
 			<artifactId>openejb-core</artifactId>
 			<version>4.6.0</version>
 			<scope>test</scope>
+			
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-jdk14</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.13</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jul-to-slf4j</artifactId>
+			<version>1.7.5</version>
+			<scope>test</scope>
+		</dependency>
+		
+		
 		<!--
         To debug having TCK at classpath (to be able to debug in TCK classes and/or to get completion in dev-suite.xml):
         1) mvn process-test-classes
@@ -127,6 +171,12 @@
 	<build>
 		<pluginManagement>
 			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.0</version>
+				</plugin>
+	            			
 				<!--This plugin's configuration is used to store Eclipse m2e settings 
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
@@ -179,6 +229,15 @@
 			</resource>
 		</resources> -->
 		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+        		
 			<!-- download tcks since i didn't find the maven artifact with tests -->
 			<plugin>
 				<groupId>com.googlecode.maven-download-plugin</groupId>
@@ -206,7 +265,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.16</version>
 				<executions>
-					<execution>
+					<!-- <execution>
 						<id>rebatch-tests</id>
 						<goals>
 							<goal>test</goal>
@@ -214,7 +273,7 @@
 						<configuration>
 							<skip>${maven.test.skip}</skip>
 						</configuration>
-					</execution>
+					</execution> -->
 					<execution>
 						<id>tck-in-memory</id>
 						<goals>

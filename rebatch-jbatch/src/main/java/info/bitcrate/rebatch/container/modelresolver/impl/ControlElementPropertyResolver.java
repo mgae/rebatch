@@ -22,6 +22,7 @@ import info.bitcrate.rebatch.jaxb.Fail;
 import info.bitcrate.rebatch.jaxb.Next;
 import info.bitcrate.rebatch.jaxb.Stop;
 
+import java.util.List;
 import java.util.Properties;
 
 public class ControlElementPropertyResolver extends AbstractPropertyResolver<TransitionElement> {
@@ -31,26 +32,27 @@ public class ControlElementPropertyResolver extends AbstractPropertyResolver<Tra
     }
 
     @Override
-    public TransitionElement substituteProperties(final TransitionElement controlElement, final Properties submittedProps,
-                                                  final Properties parentProps) {
+    public TransitionElement resolve(
+    		TransitionElement controlElement,
+    		List<Properties> properties) {
 
-        controlElement.setOn(this.replaceAllProperties(controlElement.getOn(), submittedProps, parentProps));
+        controlElement.setOn(resolveReferences(controlElement.getOn(), properties));
+
         if (controlElement instanceof End) {
             final End end = (End) controlElement;
-            end.setExitStatus(replaceAllProperties(end.getExitStatus(), submittedProps, parentProps));
+            end.setExitStatus(resolveReferences(end.getExitStatus(), properties));
         } else if (controlElement instanceof Fail) {
             final Fail fail = (Fail) controlElement;
-            fail.setExitStatus(replaceAllProperties(fail.getExitStatus(), submittedProps, parentProps));
+            fail.setExitStatus(resolveReferences(fail.getExitStatus(), properties));
         } else if (controlElement instanceof Next) {
             final Next next = (Next) controlElement;
-            next.setTo(replaceAllProperties(next.getTo(), submittedProps, parentProps));
+            next.setTo(resolveReferences(next.getTo(), properties));
         } else if (controlElement instanceof Stop) {
             final Stop stop = (Stop) controlElement;
-            stop.setExitStatus(replaceAllProperties(stop.getExitStatus(), submittedProps, parentProps));
-            stop.setRestart(replaceAllProperties(stop.getRestart(), submittedProps, parentProps));
+            stop.setExitStatus(resolveReferences(stop.getExitStatus(), properties));
+            stop.setRestart(resolveReferences(stop.getRestart(), properties));
         }
 
-        return controlElement;
+    	return controlElement;
     }
-
 }
