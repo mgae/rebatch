@@ -46,6 +46,8 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
 		SYSTEM_PROPERTIES("systemProperties", PROPERTY_SYSTEM),
 		JOB_PARAMETERS("jobParameters", PROPERTY_JOB_PARAMETER),
 		JOB_PROPERTIES("jobProperties", PROPERTY_JOB),
+		/* Note: This is a non-standard property reference scope */
+		STEP_PROPERTIES("stepProperties", PROPERTY_STEP),
 		PARTITION_PLAN("partitionPlan", PROPERTY_PARTITION);
 		
 		final int index;
@@ -85,7 +87,7 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
 
     @Override
     public B resolve(final B element, Properties jobParameters) {
-    	List<Properties> properties = new ArrayList<Properties>(4);
+    	List<Properties> properties = new ArrayList<Properties>(5);
     	
     	if (jobParameters == null) {
     		jobParameters = new Properties();
@@ -102,7 +104,11 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
     
     @Override
     public final B resolvePartition(B element, Properties partitionPlan) {
-    	List<Properties> properties = new ArrayList<Properties>(4);
+    	List<Properties> properties = new ArrayList<Properties>(5);
+
+    	if (partitionPlan == null) {
+    		partitionPlan = new Properties();
+    	}
     	
     	properties.add(PROPERTY_SYSTEM, System.getProperties());
     	properties.add(PROPERTY_JOB_PARAMETER , null);

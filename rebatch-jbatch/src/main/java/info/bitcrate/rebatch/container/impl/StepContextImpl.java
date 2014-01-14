@@ -57,7 +57,6 @@ public class StepContextImpl implements StepContext {
 
     @Override
     public Exception getException() {
-        // TODO Auto-generated method stub
         return exception;
     }
 
