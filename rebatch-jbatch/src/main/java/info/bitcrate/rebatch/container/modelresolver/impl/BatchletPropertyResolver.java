@@ -21,7 +21,8 @@ import info.bitcrate.rebatch.jaxb.Batchlet;
 import java.util.List;
 import java.util.Properties;
 
-public class BatchletPropertyResolver extends AbstractPropertyResolver<Batchlet> {
+public class BatchletPropertyResolver 
+	extends AbstractPropertyResolver<Batchlet> {
 
     public BatchletPropertyResolver(boolean isPartitionStep) {
         super(isPartitionStep);
@@ -31,10 +32,7 @@ public class BatchletPropertyResolver extends AbstractPropertyResolver<Batchlet>
 	public Batchlet resolve(Batchlet batchlet, List<Properties> properties) {
 
 		batchlet.setRef(resolveReferences(batchlet.getRef(), properties));
-
-		if (batchlet.getProperties() != null) {
-			resolveJSLProperties(batchlet.getProperties(), properties);
-		}
+		resolveJSLProperties(batchlet.getProperties(), properties);
 
 		return batchlet;
 	}

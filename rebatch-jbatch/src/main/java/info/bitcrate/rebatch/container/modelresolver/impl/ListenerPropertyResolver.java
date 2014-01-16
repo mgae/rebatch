@@ -31,10 +31,7 @@ public class ListenerPropertyResolver extends
 	@Override
 	public Listener resolve(Listener listener, List<Properties> properties) {
 		listener.setRef(resolveReferences(listener.getRef(), properties));
-
-		if (listener.getProperties() != null) {
-			resolveJSLProperties(listener.getProperties(), properties);
-		}
+		resolveJSLProperties(listener.getProperties(), properties);
 
 		return listener;
 	}

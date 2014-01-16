@@ -49,7 +49,10 @@ public class JobExecutionHelper {
 
     private static ModelNavigator<JSLJob> getResolvedJobNavigator(final String jobXml, final Properties jobParameters, final boolean parallelExecution) {
         final JSLJob jobModel = new JobModelResolver().resolveModel(jobXml);
-        final PropertyResolver<JSLJob> propResolver = PropertyResolverFactory.createJobPropertyResolver(parallelExecution);
+        final PropertyResolver<JSLJob> propResolver =
+        		PropertyResolverFactory.newInstance(JSLJob.class, parallelExecution);
+        		//PropertyResolverFactory.createJobPropertyResolver(parallelExecution);
+        		
         //propResolver.substituteProperties(jobModel, jobParameters);
         propResolver.resolve(jobModel, jobParameters);
         return NavigatorFactory.createJobNavigator(jobModel);
@@ -60,8 +63,9 @@ public class JobExecutionHelper {
     		final Properties jobParameters, 
     		final boolean parallelExecution) {
     	
-        final PropertyResolver<JSLJob> propResolver = 
-        		PropertyResolverFactory.createJobPropertyResolver(parallelExecution);
+        final PropertyResolver<JSLJob> propResolver =
+        		PropertyResolverFactory.newInstance(JSLJob.class, parallelExecution);
+        		//PropertyResolverFactory.createJobPropertyResolver(parallelExecution);
         //propResolver.substituteProperties(jobModel, jobParameters);
         
         if (parallelExecution) {

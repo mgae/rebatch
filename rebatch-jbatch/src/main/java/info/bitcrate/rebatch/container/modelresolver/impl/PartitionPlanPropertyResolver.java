@@ -22,32 +22,29 @@ import info.bitcrate.rebatch.jaxb.PartitionPlan;
 import java.util.List;
 import java.util.Properties;
 
-public class PartitionPlanPropertyResolver extends
-		AbstractPropertyResolver<PartitionPlan> {
+public class PartitionPlanPropertyResolver 
+	extends AbstractPropertyResolver<PartitionPlan> {
 
 	public PartitionPlanPropertyResolver(boolean isPartitionStep) {
 		super(isPartitionStep);
 	}
 
 	@Override
-	public PartitionPlan resolve(PartitionPlan plan, List<Properties> properties) {
+	public PartitionPlan resolve(
+			PartitionPlan plan, 
+			List<Properties> properties) {
 
 		plan.setPartitions(resolveReferences(plan.getPartitions(), properties));
 		plan.setThreads(resolveReferences(plan.getThreads(), properties));
 
-		List<JSLProperties> jslPropertiesList = plan.getProperties();
+		for (JSLProperties jslProperties : plan.getProperties()) {
+			String partition = jslProperties.getPartition(); 
 
-		if (jslPropertiesList != null) {
-			for (JSLProperties jslProperties : jslPropertiesList) {
-				// for partition properties perform substitution on the
-				// partition attribute
-				if (jslProperties.getPartition() != null) {
-					jslProperties.setPartition(resolveReferences(
-							jslProperties.getPartition(), properties));
-				}
-
-				resolveJSLProperties(jslProperties, properties);
+			if (partition != null) {
+				jslProperties.setPartition(resolveReferences(partition, properties));
 			}
+			
+			resolveJSLProperties(jslProperties, properties);
 		}
 
 		return plan;

@@ -16,8 +16,6 @@
 */
 package info.bitcrate.rebatch.container.modelresolver.impl;
 
-import info.bitcrate.rebatch.container.jsl.TransitionElement;
-import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
 import info.bitcrate.rebatch.jaxb.Decision;
 
 import java.util.List;
@@ -33,16 +31,8 @@ public class DecisionPropertyResolver extends AbstractPropertyResolver<Decision>
         decision.setId(resolveReferences(decision.getId(), properties));
         decision.setRef(resolveReferences(decision.getRef(), properties));
 
-        if (decision.getProperties() != null) {
-        	resolveJSLProperties(decision.getProperties(), properties);
-        }
-
-        if (decision.getTransitionElements() != null) {
-            for (final TransitionElement transitionElement : decision.getTransitionElements()) {
-                PropertyResolverFactory.createTransitionElementPropertyResolver(isPartitionedStep)
-                .resolve(transitionElement, properties);
-            }
-        }
+      	resolveJSLProperties(decision.getProperties(), properties);
+       	_resolve(decision.getTransitionElements(), properties);
 
         return decision;
     }

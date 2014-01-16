@@ -21,9 +21,8 @@ import info.bitcrate.rebatch.jaxb.PartitionReducer;
 import java.util.List;
 import java.util.Properties;
 
-
-public class PartitionReducerPropertyResolver extends
-    AbstractPropertyResolver<PartitionReducer> {
+public class PartitionReducerPropertyResolver 
+		extends AbstractPropertyResolver<PartitionReducer> {
 
     public PartitionReducerPropertyResolver(boolean isPartitionStep) {
         super(isPartitionStep);
@@ -35,11 +34,7 @@ public class PartitionReducerPropertyResolver extends
     		List<Properties> properties) {
 
         reducer.setRef(resolveReferences(reducer.getRef(), properties));
-
-        // Resolve all the properties defined for this artifact
-        if (reducer.getProperties() != null) {
-        	resolveJSLProperties(reducer.getProperties(), properties);
-        }
+       	resolveJSLProperties(reducer.getProperties(), properties);
 
     	return reducer;
     }

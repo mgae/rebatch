@@ -28,7 +28,7 @@
 
 	<test name="dev">
 		<classes>
-			<class name="com.ibm.jbatch.tck.tests.jslxml.PropertySubstitutionTests" />
+			<class name="com.ibm.jbatch.tck.tests.jslxml.SplitFlowTransitionLoopTests" />
 
 			<!-- <class name="com.ibm.jbatch.tck.tests.jslxml.PropertySubstitutionTests">
 				<methods>

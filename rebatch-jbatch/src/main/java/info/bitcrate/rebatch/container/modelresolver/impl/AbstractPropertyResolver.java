@@ -18,6 +18,7 @@ package info.bitcrate.rebatch.container.modelresolver.impl;
 
 import info.bitcrate.rebatch.container.exception.IllegalBatchPropertyException;
 import info.bitcrate.rebatch.container.modelresolver.PropertyResolver;
+import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
 import info.bitcrate.rebatch.jaxb.JSLProperties;
 import info.bitcrate.rebatch.jaxb.Property;
 
@@ -29,11 +30,13 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
 
 	static final int PROPERTY_SYSTEM = 0;
 	static final int PROPERTY_JOB_PARAMETER = 1;
-	static final int PROPERTY_JOB = 2;
-	static final int PROPERTY_STEP = 3;
-	static final int PROPERTY_PARTITION = 4;
+	static final int PROPERTY_PARTITION = 2;
+	static final int PROPERTY_JOB = 3;
 	
-	private static final String EXPR_BEGIN = "#{";
+    //Substitute empty String for unresolvable props
+    private static final String UNRESOLVED_PROP_VALUE = "";
+
+    private static final String EXPR_BEGIN = "#{";
 	private static final String EXPR_END = "}";
 
 	private static final String PROP_NAME_BEGIN = "['";
@@ -45,10 +48,8 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
 	private enum ExpressionType {
 		SYSTEM_PROPERTIES("systemProperties", PROPERTY_SYSTEM),
 		JOB_PARAMETERS("jobParameters", PROPERTY_JOB_PARAMETER),
-		JOB_PROPERTIES("jobProperties", PROPERTY_JOB),
-		/* Note: This is a non-standard property reference scope */
-		STEP_PROPERTIES("stepProperties", PROPERTY_STEP),
-		PARTITION_PLAN("partitionPlan", PROPERTY_PARTITION);
+		PARTITION_PLAN("partitionPlan", PROPERTY_PARTITION),
+		JOB_PROPERTIES("jobProperties", PROPERTY_JOB);
 		
 		final int index;
 		final String referenceName;
@@ -78,8 +79,6 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
 	
     protected boolean isPartitionedStep = false;
 
-    //Substitute empty String for unresolvable props
-    public static final String UNRESOLVED_PROP_VALUE = "";
     
     public AbstractPropertyResolver(boolean isPartitionStep) {
         this.isPartitionedStep = isPartitionStep;
@@ -87,7 +86,7 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
 
     @Override
     public B resolve(final B element, Properties jobParameters) {
-    	List<Properties> properties = new ArrayList<Properties>(5);
+    	List<Properties> properties = new ArrayList<Properties>(6);
     	
     	if (jobParameters == null) {
     		jobParameters = new Properties();
@@ -95,16 +94,15 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
     	
     	properties.add(PROPERTY_SYSTEM, System.getProperties());
     	properties.add(PROPERTY_JOB_PARAMETER , jobParameters);
-    	properties.add(PROPERTY_JOB, null);
-    	properties.add(PROPERTY_STEP, null);
     	properties.add(PROPERTY_PARTITION, null);
+    	properties.add(PROPERTY_JOB, null);
     	
     	return resolve(element, properties);
     }
     
     @Override
     public final B resolvePartition(B element, Properties partitionPlan) {
-    	List<Properties> properties = new ArrayList<Properties>(5);
+    	List<Properties> properties = new ArrayList<Properties>(6);
 
     	if (partitionPlan == null) {
     		partitionPlan = new Properties();
@@ -112,11 +110,34 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
     	
     	properties.add(PROPERTY_SYSTEM, System.getProperties());
     	properties.add(PROPERTY_JOB_PARAMETER , null);
-    	properties.add(PROPERTY_JOB, null);
-    	properties.add(PROPERTY_STEP, null);
     	properties.add(PROPERTY_PARTITION, partitionPlan);
+    	properties.add(PROPERTY_JOB, null);
     	
     	return resolve(element, properties);
+	}
+    
+    protected <T> void _resolve(List<T> elements, List<Properties> properties) {
+    	for (T element : elements) {
+    		_resolve(element, properties);
+    	}
+    }
+    
+	@SuppressWarnings("unchecked")
+	protected <T> void _resolve(T element, List<Properties> properties) {
+		
+		if (element == null) {
+    		/*-
+    		 * Nothing to resolve
+    		 */
+			return;
+		}
+		
+		Class<T> klazz = (Class<T>) element.getClass();
+		
+		PropertyResolver<T> resolver = 
+				PropertyResolverFactory.newInstance(klazz, isPartitionedStep); 
+		
+		resolver.resolve(element, properties);
 	}
 
     protected void resolveJSLProperties(
@@ -134,7 +155,7 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
     		
     		if (addedScope != null) {
     			/*-
-    			 *  If a new scope is in the process of coming into being, add
+    			 *  If a new scope is in the process of coming into view, add
     			 *  the properties as we go so that they can be referenced 
     			 *  by subsequent properties of this same JSL properties 
     			 *  element.
@@ -155,7 +176,19 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
     		final JSLProperties jslProperties,
     		final List<Properties> properties) {
     	
-    	resolveJSLProperties(jslProperties, properties, null);
+    	if (jslProperties == null) {
+    		/*-
+    		 * Nothing to resolve
+    		 */
+    		return;
+    	}
+    	
+    	Properties localProperties = new Properties();
+    	properties.add(localProperties);
+    	
+    	resolveJSLProperties(jslProperties, properties, localProperties);
+    	
+    	properties.remove(properties.size() - 1);
     }
     
     protected static Properties toProperties(
@@ -228,20 +261,21 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
     	
     	int index = 0;
     	PropertyReference reference = null;
-    	int count = 0;
     	
     	while ((reference = nextReference(jslValue, index)) != null) {
+			/*-
+			 * References to partition plan properties are not active 
+			 * during the first attempt to resolve values. Partition
+			 * plans are resolved when the sub-jobs for each partition is
+			 * started by the runtime.
+			 */
     		if (!reference.isActive()) {
     			/*-
-    			 * References to partition plan properties are not active 
-    			 * during the first attempt to resolve values. Partition
-    			 * plans are resolved when the sub-jobs for each partition is
-    			 * started by the runtime.
+    			 *  Try to resolve the reference to ensure #{partitionPlan} is
+    			 *  not being used out of proper (step) scope. 
     			 */
+    			resolveReference(reference, properties);
     			index += reference.getLengthPlusDefaultValExpr();
-    			if (++count > 100) {
-    				throw new IllegalStateException("infinite loop");
-    			}
     			continue;
     		}
     		
@@ -350,12 +384,34 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
     		final PropertyReference reference,
     		final List<Properties> properties) {
     	
-    	Properties referencedProperties = properties.get(reference.type.index);
+    	Properties referencedProperties = null;
+    	
+    	if (reference.type.index != PROPERTY_JOB) {
+    		/*-
+    		 * May be null such as when partition properties are referenced
+    		 * outside of a step.
+    		 */
+    		referencedProperties = properties.get(reference.type.index);
+    	} else {
+    		/*-
+    		 * Iterate from the deepest scope up to and including the job
+    		 * properties scope. Take the first property map which contains
+    		 * the referenced property name or end up with the job properties.
+    		 */
+    		for (int i = properties.size(); --i >= PROPERTY_JOB;) {
+    			referencedProperties = properties.get(i);
+    			
+    			if (referencedProperties.containsKey(reference.name)) {
+    				break;
+    			}
+    		}
+    	}
     	
     	if (referencedProperties == null) {
     		throw new IllegalBatchPropertyException(
-    				"Referenced " + reference.type.referenceName + "property '" + reference.name + 
-    				"' is not in scope at point of reference");
+    				"Referenced " + reference.type.referenceName 
+    						+ " property '" + reference.name 
+    						+ "' is not in scope at point of reference");
     	}
     	
     	String value = 

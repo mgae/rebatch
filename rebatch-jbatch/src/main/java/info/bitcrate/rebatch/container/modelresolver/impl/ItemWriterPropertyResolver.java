@@ -30,12 +30,8 @@ public class ItemWriterPropertyResolver extends AbstractPropertyResolver<ItemWri
     @Override
     public ItemWriter resolve(ItemWriter writer, List<Properties> properties) {
     	writer.setRef(resolveReferences(writer.getRef(), properties));
+    	resolveJSLProperties(writer.getProperties(), properties);
 
-        // Resolve all the properties defined for this artifact
-        if (writer.getProperties() != null) {
-            resolveJSLProperties(writer.getProperties(), properties);
-        }
-        
     	return writer;
     }
 }

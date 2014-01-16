@@ -30,10 +30,7 @@ public class CollectorPropertyResolver extends AbstractPropertyResolver<Collecto
 	@Override
 	public Collector resolve(Collector collector, List<Properties> properties) {
 		collector.setRef(resolveReferences(collector.getRef(), properties));
-
-		if (collector.getProperties() != null) {
-			resolveJSLProperties(collector.getProperties(), properties);
-		}
+		resolveJSLProperties(collector.getProperties(), properties);
 
 		return collector;
 	}

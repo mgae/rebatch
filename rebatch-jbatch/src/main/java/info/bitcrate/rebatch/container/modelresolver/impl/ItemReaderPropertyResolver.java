@@ -21,21 +21,18 @@ import info.bitcrate.rebatch.jaxb.ItemReader;
 import java.util.List;
 import java.util.Properties;
 
-public class ItemReaderPropertyResolver extends AbstractPropertyResolver<ItemReader> {
+public class ItemReaderPropertyResolver extends
+		AbstractPropertyResolver<ItemReader> {
 
-    public ItemReaderPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+	public ItemReaderPropertyResolver(boolean isPartitionStep) {
+		super(isPartitionStep);
+	}
 
-    @Override
-    public ItemReader resolve(ItemReader reader, List<Properties> properties) {
-    	reader.setRef(resolveReferences(reader.getRef(), properties));
+	@Override
+	public ItemReader resolve(ItemReader reader, List<Properties> properties) {
+		reader.setRef(resolveReferences(reader.getRef(), properties));
+		resolveJSLProperties(reader.getProperties(), properties);
 
-        // Resolve all the properties defined for this artifact
-        if (reader.getProperties() != null) {
-            resolveJSLProperties(reader.getProperties(), properties);
-        }
-        
-    	return reader;
-    }
+		return reader;
+	}
 }

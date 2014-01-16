@@ -16,16 +16,8 @@
 */
 package info.bitcrate.rebatch.container.modelresolver.impl;
 
-import info.bitcrate.rebatch.container.jsl.ExecutionElement;
-import info.bitcrate.rebatch.container.modelresolver.PropertyResolver;
-import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
-import info.bitcrate.rebatch.jaxb.Decision;
-import info.bitcrate.rebatch.jaxb.Flow;
 import info.bitcrate.rebatch.jaxb.JSLJob;
 import info.bitcrate.rebatch.jaxb.JSLProperties;
-import info.bitcrate.rebatch.jaxb.Listener;
-import info.bitcrate.rebatch.jaxb.Split;
-import info.bitcrate.rebatch.jaxb.Step;
 
 import java.util.List;
 import java.util.Properties;
@@ -67,25 +59,10 @@ public class JobPropertyResolver extends AbstractPropertyResolver<JSLJob> {
     	
         // Resolve Listener properties, this is list of listeners List<Listener>
         if (job.getListeners() != null) {
-        	PropertyResolver<Listener> resolver = 
-        			PropertyResolverFactory.createListenerPropertyResolver(isPartitionedStep);
-        	
-            for (final Listener listener : job.getListeners().getListenerList()) {
-            	resolver.resolve(listener, properties);
-            }
+           	_resolve(job.getListeners().getListenerList(), properties);
         }
 
-        for (final ExecutionElement next : job.getExecutionElements()) {
-            if (next instanceof Step) {
-                PropertyResolverFactory.createStepPropertyResolver(isPartitionedStep).resolve((Step) next, properties);
-            } else if (next instanceof Decision) {
-                PropertyResolverFactory.createDecisionPropertyResolver(isPartitionedStep).resolve((Decision) next, properties);
-            } else if (next instanceof Split) {
-                PropertyResolverFactory.createSplitPropertyResolver(isPartitionedStep).resolve((Split) next, properties);
-            } else if (next instanceof Flow) {
-                PropertyResolverFactory.createFlowPropertyResolver(isPartitionedStep).resolve((Flow) next, properties);
-            }
-        }
+       	_resolve(job.getExecutionElements(), properties);
 
     	properties.set(PROPERTY_JOB, null);
 

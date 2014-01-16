@@ -30,12 +30,8 @@ public class AnalyzerPropertyResolver extends
 
 	@Override
 	public Analyzer resolve(Analyzer analyzer, List<Properties> properties) {
-
 		analyzer.setRef(resolveReferences(analyzer.getRef(), properties));
-
-		if (analyzer.getProperties() != null) {
-			resolveJSLProperties(analyzer.getProperties(), properties);
-		}
+		resolveJSLProperties(analyzer.getProperties(), properties);
 
 		return analyzer;
 	}

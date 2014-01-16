@@ -33,10 +33,7 @@ public class PartitionMapperPropertyResolver extends
 			List<Properties> properties) {
 
 		mapper.setRef(resolveReferences(mapper.getRef(), properties));
-
-		if (mapper.getProperties() != null) {
-			resolveJSLProperties(mapper.getProperties(), properties);
-		}
+		resolveJSLProperties(mapper.getProperties(), properties);
 
 		return mapper;
 	}

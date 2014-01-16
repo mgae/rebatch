@@ -21,21 +21,21 @@ import info.bitcrate.rebatch.jaxb.ItemProcessor;
 import java.util.List;
 import java.util.Properties;
 
-public class ItemProcessorPropertyResolver extends AbstractPropertyResolver<ItemProcessor> {
+public class ItemProcessorPropertyResolver extends
+		AbstractPropertyResolver<ItemProcessor> {
 
-    public ItemProcessorPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+	public ItemProcessorPropertyResolver(boolean isPartitionStep) {
+		super(isPartitionStep);
+	}
 
-    @Override
-    public ItemProcessor resolve(ItemProcessor processor, List<Properties> properties) {
-    	processor.setRef(resolveReferences(processor.getRef(), properties));
+	@Override
+	public ItemProcessor resolve(
+			ItemProcessor processor,
+			List<Properties> properties) {
+		
+		processor.setRef(resolveReferences(processor.getRef(), properties));
+		resolveJSLProperties(processor.getProperties(), properties);
 
-        // Resolve all the properties defined for this artifact
-        if (processor.getProperties() != null) {
-            resolveJSLProperties(processor.getProperties(), properties);
-        }
-        
-    	return processor;
-    }
+		return processor;
+	}
 }

@@ -16,7 +16,6 @@
 */
 package info.bitcrate.rebatch.container.modelresolver.impl;
 
-import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
 import info.bitcrate.rebatch.jaxb.Chunk;
 
 import java.util.List;
@@ -37,40 +36,13 @@ public class ChunkPropertyResolver extends AbstractPropertyResolver<Chunk> {
         chunk.setSkipLimit(resolveReferences(chunk.getSkipLimit(), properties));
         chunk.setRetryLimit(resolveReferences(chunk.getRetryLimit(), properties));
 
-        // Resolve Reader properties
-        if (chunk.getReader() != null) {
-            PropertyResolverFactory.createReaderPropertyResolver(isPartitionedStep).resolve(chunk.getReader(), properties);
-        }
-
-        // Resolve Processor properties
-        if (chunk.getProcessor() != null) {
-            PropertyResolverFactory.createProcessorPropertyResolver(isPartitionedStep).resolve(chunk.getProcessor(), properties);
-        }
-
-        // Resolve Writer properties
-        if (chunk.getWriter() != null) {
-            PropertyResolverFactory.createWriterPropertyResolver(isPartitionedStep).resolve(chunk.getWriter(), properties);
-        }
-
-        // Resolve CheckpointAlgorithm properties
-        if (chunk.getCheckpointAlgorithm() != null) {
-            PropertyResolverFactory.createCheckpointAlgorithmPropertyResolver(isPartitionedStep).resolve(chunk.getCheckpointAlgorithm(), properties);
-        }
-
-        // Resolve SkippableExceptionClasses properties
-        if (chunk.getSkippableExceptionClasses() != null) {
-            PropertyResolverFactory.createSkippableExceptionClassesPropertyResolver(isPartitionedStep).resolve(chunk.getSkippableExceptionClasses(), properties);
-        }
-
-        // Resolve RetryableExceptionClasses properties
-        if (chunk.getRetryableExceptionClasses() != null) {
-            PropertyResolverFactory.createRetryableExceptionClassesPropertyResolver(isPartitionedStep).resolve(chunk.getRetryableExceptionClasses(), properties);
-        }
-
-        // Resolve NoRollbackExceptionClasses properties
-        if (chunk.getNoRollbackExceptionClasses() != null) {
-            PropertyResolverFactory.createNoRollbackExceptionClassesPropertyResolver(isPartitionedStep).resolve(chunk.getNoRollbackExceptionClasses(), properties);
-        }
+       	_resolve(chunk.getReader(), properties);
+       	_resolve(chunk.getProcessor(), properties);
+       	_resolve(chunk.getWriter(), properties);
+       	_resolve(chunk.getCheckpointAlgorithm(), properties);
+       	_resolve(chunk.getSkippableExceptionClasses(), properties);
+       	_resolve(chunk.getRetryableExceptionClasses(), properties);
+       	_resolve(chunk.getNoRollbackExceptionClasses(), properties);
 
     	return chunk;
     }

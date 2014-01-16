@@ -16,12 +16,7 @@
 */
 package info.bitcrate.rebatch.container.modelresolver.impl;
 
-import info.bitcrate.rebatch.container.jsl.ExecutionElement;
-import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
-import info.bitcrate.rebatch.jaxb.Decision;
 import info.bitcrate.rebatch.jaxb.Flow;
-import info.bitcrate.rebatch.jaxb.Split;
-import info.bitcrate.rebatch.jaxb.Step;
 
 import java.util.List;
 import java.util.Properties;
@@ -36,18 +31,7 @@ public class FlowPropertyResolver extends AbstractPropertyResolver<Flow> {
     public Flow resolve(Flow flow, List<Properties> properties) {
         flow.setId(resolveReferences(flow.getId(), properties));
         flow.setNextFromAttribute(resolveReferences(flow.getNextFromAttribute(), properties));
-
-        for (final ExecutionElement next : flow.getExecutionElements()) {
-            if (next instanceof Step) {
-                PropertyResolverFactory.createStepPropertyResolver(isPartitionedStep).resolve((Step) next, properties);
-            } else if (next instanceof Decision) {
-                PropertyResolverFactory.createDecisionPropertyResolver(isPartitionedStep).resolve((Decision) next, properties);
-            } else if (next instanceof Flow) {
-                PropertyResolverFactory.createFlowPropertyResolver(isPartitionedStep).resolve((Flow) next, properties);
-            } else if (next instanceof Split) {
-                PropertyResolverFactory.createSplitPropertyResolver(isPartitionedStep).resolve((Split) next, properties);
-            }
-        }
+       	_resolve(flow.getExecutionElements(), properties);
 
         return flow;
     }

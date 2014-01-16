@@ -16,10 +16,7 @@
  */
 package info.bitcrate.rebatch.container.modelresolver.impl;
 
-import info.bitcrate.rebatch.container.exception.JobSpecificationException;
-import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
 import info.bitcrate.rebatch.jaxb.Partition;
-import info.bitcrate.rebatch.jaxb.PartitionMapper;
 
 import java.util.List;
 import java.util.Properties;
@@ -34,31 +31,11 @@ public class PartitionPropertyResolver extends
 	@Override
 	public Partition resolve(Partition partition, List<Properties> properties) {
 		
-		PartitionMapper mapper = partition.getMapper();
-		
-		if (mapper != null) {
-			PropertyResolverFactory.createPartitionMapperPropertyResolver(isPartitionedStep).resolve(mapper, properties);
-		}
-
-		if (partition.getPlan() != null) {
-			if (mapper != null) {
-				throw new JobSpecificationException("Partition 'plan' element is mutually exclusive with 'mapper' element");
-			}
-			
-			PropertyResolverFactory.createPartitionPlanPropertyResolver(isPartitionedStep).resolve(partition.getPlan(), properties);
-		}
-		
-		if (partition.getCollector() != null) {
-			PropertyResolverFactory.createCollectorPropertyResolver(isPartitionedStep).resolve(partition.getCollector(), properties);
-		}
-		
-		if (partition.getAnalyzer() != null) {
-			PropertyResolverFactory.createAnalyzerPropertyResolver(isPartitionedStep).resolve(partition.getAnalyzer(), properties);
-		}
-		
-		if (partition.getReducer() != null) {
-			PropertyResolverFactory.createPartitionReducerPropertyResolver(isPartitionedStep).resolve(partition.getReducer(), properties);
-		}
+		_resolve(partition.getMapper(), properties);
+		_resolve(partition.getPlan(), properties);
+		_resolve(partition.getCollector(), properties);
+		_resolve(partition.getAnalyzer(), properties);
+		_resolve(partition.getReducer(), properties);
 		
 		return partition;
 	}

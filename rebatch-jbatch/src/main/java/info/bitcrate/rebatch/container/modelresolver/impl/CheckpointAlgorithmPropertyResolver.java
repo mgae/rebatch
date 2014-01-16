@@ -21,20 +21,20 @@ import info.bitcrate.rebatch.jaxb.CheckpointAlgorithm;
 import java.util.List;
 import java.util.Properties;
 
-public class CheckpointAlgorithmPropertyResolver extends AbstractPropertyResolver<CheckpointAlgorithm> {
+public class CheckpointAlgorithmPropertyResolver 
+	extends AbstractPropertyResolver<CheckpointAlgorithm> {
 
     public CheckpointAlgorithmPropertyResolver(boolean isPartitionStep) {
         super(isPartitionStep);
     }
 
 	@Override
-	public CheckpointAlgorithm resolve(CheckpointAlgorithm algorithm, List<Properties> properties) {
+	public CheckpointAlgorithm resolve(
+			CheckpointAlgorithm algorithm, 
+			List<Properties> properties) {
 
 		algorithm.setRef(resolveReferences(algorithm.getRef(), properties));
-
-		if (algorithm.getProperties() != null) {
-			resolveJSLProperties(algorithm.getProperties(), properties);
-		}
+		resolveJSLProperties(algorithm.getProperties(), properties);
 
 		return algorithm;
 	}

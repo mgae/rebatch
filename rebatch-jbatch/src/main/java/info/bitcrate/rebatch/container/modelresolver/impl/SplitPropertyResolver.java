@@ -16,8 +16,6 @@
 */
 package info.bitcrate.rebatch.container.modelresolver.impl;
 
-import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
-import info.bitcrate.rebatch.jaxb.Flow;
 import info.bitcrate.rebatch.jaxb.Split;
 
 import java.util.List;
@@ -36,9 +34,7 @@ public class SplitPropertyResolver extends AbstractPropertyResolver<Split> {
         split.setNextFromAttribute(resolveReferences(split.getNextFromAttribute(), properties));
 
         // Resolve all the properties defined for this step
-        for (Flow flow : split.getFlows()) {
-            PropertyResolverFactory.createFlowPropertyResolver(this.isPartitionedStep).resolve(flow, properties);
-        }
+        _resolve(split.getFlows(), properties);
         
     	return split;
     }
