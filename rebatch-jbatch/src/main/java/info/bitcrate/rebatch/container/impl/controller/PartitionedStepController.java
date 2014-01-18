@@ -17,6 +17,7 @@
 package info.bitcrate.rebatch.container.impl.controller;
 
 import info.bitcrate.rebatch.container.exception.BatchContainerRuntimeException;
+import info.bitcrate.rebatch.container.impl.JobContextImpl;
 import info.bitcrate.rebatch.container.impl.StepContextImpl;
 import info.bitcrate.rebatch.container.impl.jobinstance.RuntimeJobExecution;
 import info.bitcrate.rebatch.container.jsl.CloneUtility;
@@ -30,8 +31,8 @@ import info.bitcrate.rebatch.container.util.BatchPartitionPlan;
 import info.bitcrate.rebatch.container.util.BatchPartitionWorkUnit;
 import info.bitcrate.rebatch.container.util.BatchWorkUnit;
 import info.bitcrate.rebatch.container.util.PartitionDataWrapper;
-import info.bitcrate.rebatch.container.util.PartitionsBuilderConfig;
 import info.bitcrate.rebatch.container.util.PartitionDataWrapper.PartitionEventType;
+import info.bitcrate.rebatch.container.util.PartitionsBuilderConfig;
 import info.bitcrate.rebatch.jaxb.Analyzer;
 import info.bitcrate.rebatch.jaxb.JSLJob;
 import info.bitcrate.rebatch.jaxb.JSLProperties;
@@ -40,6 +41,12 @@ import info.bitcrate.rebatch.jaxb.PartitionReducer;
 import info.bitcrate.rebatch.jaxb.Property;
 import info.bitcrate.rebatch.jaxb.Step;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import javax.batch.api.partition.PartitionPlan;
 import javax.batch.api.partition.PartitionReducer.PartitionStatus;
 import javax.batch.operations.JobExecutionAlreadyCompleteException;
@@ -47,12 +54,8 @@ import javax.batch.operations.JobExecutionNotMostRecentException;
 import javax.batch.operations.JobRestartException;
 import javax.batch.operations.JobStartException;
 import javax.batch.runtime.BatchStatus;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import javax.batch.runtime.Metric;
+import javax.batch.runtime.Metric.MetricType;
 
 public class PartitionedStepController extends BaseStepController {
     private static final int DEFAULT_PARTITION_INSTANCES = 1;
@@ -356,13 +359,17 @@ public class PartitionedStepController extends BaseStepController {
         boolean rollback = false;
 
         for (final BatchWorkUnit subJob : completedWork) {
-            BatchStatus batchStatus = subJob.getJobExecutionImpl().getJobContext().getBatchStatus();
+        	JobContextImpl partitionContext = subJob.getJobExecutionImpl().getJobContext();
+        	
+            BatchStatus batchStatus = partitionContext.getBatchStatus();
             if (batchStatus.equals(BatchStatus.FAILED)) {
                 rollback = true;
 
                 //Keep track of the failing status and throw an exception to propagate after the rest of the partitions are complete
                 stepContext.setBatchStatus(BatchStatus.FAILED);
             }
+            
+            accumulateStepMetrics(partitionContext);
         }
 
         //If rollback is false we never issued a rollback so we can issue a logicalTXSynchronizationBeforeCompletion
@@ -380,6 +387,12 @@ public class PartitionedStepController extends BaseStepController {
         }
     }
 
+    protected void accumulateStepMetrics(JobContextImpl partitionContext) {
+    	for (MetricType type : Metric.MetricType.values()) {
+    		stepContext.accumulate(partitionContext.getMetric(type));
+    	}
+     }
+    
     @Override
     protected void setupStepArtifacts() {
         InjectionReferences injectionRef = new InjectionReferences(jobExecutionImpl.getJobContext(), stepContext, null);

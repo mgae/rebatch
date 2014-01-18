@@ -14,38 +14,23 @@
   limitations under the License.
 -->
 <job
-	id="partition-mapper-properties-test"
+	id="metrics-aggregation-test"
 	version="1.0"
 	xmlns="http://xmlns.jcp.org/xml/ns/javaee"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd">
 
-	<properties>
-		<property name="jobProp" value="Z"/>
-	</properties>
-
-	<step id="partitioned-step">
-		<properties>
-			<property name="jobProp" value="Y"/>
-		</properties>
-		
-		<batchlet ref="info.bitcrate.rebatch.test.artifacts.ExitStatusPassthruBatchlet">
-			<properties>
-				<property name="exitStatus" value="#{partitionPlan['exitStatus']}"/>
-			</properties>
-		</batchlet>
+	<step id="step1">
+		<chunk>
+			<reader ref="info.bitcrate.rebatch.test.artifacts.SimpleThreeStringReader"/>
+			<processor ref="info.bitcrate.rebatch.test.artifacts.NullItemProcessor"/>
+			<writer ref="info.bitcrate.rebatch.test.artifacts.SystemOutItemWriter"/>
+		</chunk>
 		
 		<partition>
-			<mapper ref="info.bitcrate.rebatch.test.artifacts.PartitionMapper1">
-				<properties>
-					<property name="jobParam" value="#{jobParameters['jobParam']}"/>
-					<property name="jobProp" value="#{jobProperties['jobProp']}"/>
-				</properties>
-			</mapper>
+			<plan partitions="2" threads="2">
 			
-			<analyzer ref="info.bitcrate.rebatch.test.artifacts.PartitionAnalyzer1"></analyzer>
+			</plan>
 		</partition>
-
-		<fail on="ZYZ" exit-status="FAILED" />
 	</step>
 </job>

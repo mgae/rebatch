@@ -2,11 +2,15 @@ package info.bitcrate.rebatch.test.jobs;
 
 import info.bitcrate.rebatch.util.Batches;
 
+import java.util.List;
 import java.util.Properties;
 
 import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
 import javax.batch.runtime.BatchStatus;
+import javax.batch.runtime.Metric;
+import javax.batch.runtime.StepExecution;
+import javax.batch.runtime.Metric.MetricType;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -43,5 +47,24 @@ public class TestJslVariableSubstitution {
 		Assert.assertEquals(
 				"FAILED_NULL", 
 				operator.getJobExecution(executionId).getExitStatus());
+	}
+
+	@Test
+	public void testMetricsAggregation() {
+		long executionId = operator.start("metrics-aggregation-test", null);
+		
+		Batches.waitForEnd(executionId);
+		
+		List<StepExecution> steps = operator.getStepExecutions(executionId);
+		
+		Assert.assertEquals(1L, steps.size());
+		
+		StepExecution step = steps.get(0);
+		
+		for (Metric m : step.getMetrics()) {
+			if (m.getType() == MetricType.WRITE_COUNT) {
+				Assert.assertEquals(6, m.getValue());
+			}
+		}
 	}
 }

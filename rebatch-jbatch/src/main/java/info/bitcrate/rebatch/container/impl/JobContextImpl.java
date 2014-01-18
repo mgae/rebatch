@@ -21,10 +21,12 @@ import info.bitcrate.rebatch.jaxb.JSLJob;
 import info.bitcrate.rebatch.jaxb.JSLProperties;
 import info.bitcrate.rebatch.jaxb.Property;
 
-import javax.batch.runtime.BatchStatus;
-import javax.batch.runtime.context.JobContext;
-
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.batch.runtime.BatchStatus;
+import javax.batch.runtime.Metric;
+import javax.batch.runtime.context.JobContext;
 
 
 public class JobContextImpl implements JobContext {
@@ -40,6 +42,8 @@ public class JobContextImpl implements JobContext {
     private long executionId;
     private long instanceId;
     protected String restartOn;
+    
+    private ConcurrentHashMap<String, MetricImpl> metrics = new ConcurrentHashMap<String, MetricImpl>();
 
     public JobContextImpl(final ModelNavigator<JSLJob> navigator, final JSLProperties jslProperties) {
         this.navigator = navigator;
@@ -58,6 +62,31 @@ public class JobContextImpl implements JobContext {
         return jobProperties;
     }
 
+    public MetricImpl getMetric(MetricImpl.MetricType metricType) {
+        return (MetricImpl) metrics.get(metricType.name());
+    }
+    
+    public void accumulate(MetricImpl metric) {
+    	Metric.MetricType type = metric.getType();
+    	String name = type.name();
+    	MetricImpl m = this.metrics.get(name);
+    	
+    	if (m != null) {
+    		m.incValueBy(metric.getValue());
+    	} else {
+        	metrics.put(name, new MetricImpl(type, metric.getValue()));
+    	}
+    }
+    
+    public void accumulateMetric(MetricImpl.MetricType metricType, long value) {
+    	String name = metricType.name();
+    	Metric m = metrics.get(name);
+    	
+    	long accumluated = ((m != null) ? m.getValue() : 0L) + value;
+    	
+    	metrics.put(name, new MetricImpl(metricType, accumluated));
+    }
+    
     public ModelNavigator<JSLJob> getNavigator() {
         return navigator;
     }

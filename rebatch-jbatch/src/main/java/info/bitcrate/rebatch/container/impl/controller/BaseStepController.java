@@ -19,6 +19,7 @@ package info.bitcrate.rebatch.container.impl.controller;
 import info.bitcrate.rebatch.container.ExecutionElementController;
 import info.bitcrate.rebatch.container.exception.BatchContainerRuntimeException;
 import info.bitcrate.rebatch.container.exception.BatchContainerServiceException;
+import info.bitcrate.rebatch.container.impl.JobContextImpl;
 import info.bitcrate.rebatch.container.impl.MetricImpl;
 import info.bitcrate.rebatch.container.impl.StepContextImpl;
 import info.bitcrate.rebatch.container.impl.StepExecutionImpl;
@@ -38,13 +39,6 @@ import info.bitcrate.rebatch.spi.PersistenceManagerService;
 import info.bitcrate.rebatch.spi.TransactionManagementService;
 import info.bitcrate.rebatch.spi.TransactionManagerAdapter;
 
-import javax.batch.operations.JobExecutionAlreadyCompleteException;
-import javax.batch.operations.JobExecutionNotMostRecentException;
-import javax.batch.operations.JobRestartException;
-import javax.batch.operations.JobStartException;
-import javax.batch.runtime.BatchStatus;
-import javax.batch.runtime.JobInstance;
-
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
@@ -56,6 +50,15 @@ import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.batch.operations.JobExecutionAlreadyCompleteException;
+import javax.batch.operations.JobExecutionNotMostRecentException;
+import javax.batch.operations.JobRestartException;
+import javax.batch.operations.JobStartException;
+import javax.batch.runtime.BatchStatus;
+import javax.batch.runtime.JobInstance;
+import javax.batch.runtime.Metric;
+import javax.batch.runtime.Metric.MetricType;
 
 /**
  * Change the name of this class to something else!! Or change BaseStepController.
@@ -184,6 +187,7 @@ public abstract class BaseStepController implements ExecutionElementController {
             // since the call back to the partition analyzer only happens on the partition threads.
             // On the partition threads, then, we harden the status at the partition level before we
             // send it back to the main thread.
+        	accumulateJobMetrics();
             persistUserData();
             transitionToFinalBatchStatus();
             defaultExitStatusIfNecessary();
@@ -338,6 +342,14 @@ public abstract class BaseStepController implements ExecutionElementController {
         stepContext.setBatchStatus(BatchStatus.STARTING);
     }
 
+    protected void accumulateJobMetrics() {
+    	JobContextImpl jobContext = jobExecutionImpl.getJobContext();
+    	
+    	for (MetricType type : Metric.MetricType.values()) {
+    		jobContext.accumulate(stepContext.getMetric(type));
+    	}
+     }
+    
     protected void persistUserData() {
         final ByteArrayOutputStream persistentBAOS = new ByteArrayOutputStream();
         final ObjectOutputStream persistentDataOOS;

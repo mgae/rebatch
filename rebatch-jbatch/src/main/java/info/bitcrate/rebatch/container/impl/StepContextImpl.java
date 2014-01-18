@@ -19,6 +19,7 @@ package info.bitcrate.rebatch.container.impl;
 import javax.batch.runtime.BatchStatus;
 import javax.batch.runtime.Metric;
 import javax.batch.runtime.context.StepContext;
+
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Collection;
@@ -44,7 +45,7 @@ public class StepContextImpl implements StepContext {
     private String batchletProcessRetVal = null;
 
 
-    private ConcurrentHashMap<String, Metric> metrics = new ConcurrentHashMap<String, Metric>();
+    private ConcurrentHashMap<String, MetricImpl> metrics = new ConcurrentHashMap<String, MetricImpl>();
 
     public StepContextImpl(String stepId) {
         this.stepId = stepId;
@@ -76,11 +77,11 @@ public class StepContextImpl implements StepContext {
 
     @Override
     public Metric[] getMetrics() {
-        final Collection<Metric> values = metrics.values();
+        final Collection<MetricImpl> values = metrics.values();
         return values.toArray(new Metric[values.size()]);
     }
 
-    public Map<String, Metric> metricsAsMap() {
+    public Map<String, ? extends Metric> metricsAsMap() {
         for (final Metric.MetricType type : Metric.MetricType.values()) {
             metrics.putIfAbsent(type.name(), new MetricImpl(type, 0));
         }
@@ -93,6 +94,27 @@ public class StepContextImpl implements StepContext {
 
     public void addMetric(MetricImpl.MetricType metricType, long value) {
         metrics.putIfAbsent(metricType.name(), new MetricImpl(metricType, value));
+    }
+    
+    public void accumulate(MetricImpl metric) {
+    	Metric.MetricType type = metric.getType();
+    	String name = type.name();
+    	MetricImpl m = this.metrics.get(name);
+    	
+    	if (m != null) {
+    		m.incValueBy(metric.getValue());
+    	} else {
+        	metrics.put(name, new MetricImpl(type, metric.getValue()));
+    	}
+    }
+    
+    public void accumulateMetric(MetricImpl.MetricType metricType, long value) {
+    	String name = metricType.name();
+    	Metric m = metrics.get(name);
+    	
+    	long accumluated = ((m != null) ? m.getValue() : 0L) + value;
+    	
+    	metrics.put(name, new MetricImpl(metricType, accumluated));
     }
 
     @Override
