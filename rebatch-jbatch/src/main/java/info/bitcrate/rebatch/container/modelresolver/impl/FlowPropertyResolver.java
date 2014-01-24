@@ -21,17 +21,34 @@ import info.bitcrate.rebatch.jaxb.Flow;
 import java.util.List;
 import java.util.Properties;
 
-public class FlowPropertyResolver extends AbstractPropertyResolver<Flow> {
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 
-    public FlowPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+public class FlowPropertyResolver extends AbstractPropertyResolver<Flow> {
 
     @Override
     public Flow resolve(Flow flow, List<Properties> properties) {
         flow.setId(resolveReferences(flow.getId(), properties));
         flow.setNextFromAttribute(resolveReferences(flow.getNextFromAttribute(), properties));
        	_resolve(flow.getExecutionElements(), properties);
+
+        return flow;
+    }
+    
+    @Override
+    public Flow resolve(Flow flow, JobContext jobContext) {
+        flow.setId(resolveReferences(flow.getId(), jobContext));
+        flow.setNextFromAttribute(resolveReferences(flow.getNextFromAttribute(), jobContext));
+       	_resolve(flow.getExecutionElements(), jobContext);
+
+        return flow;
+	}
+    
+    @Override
+    public Flow resolve(Flow flow, StepContext stepContext) {
+        flow.setId(resolveReferences(flow.getId(), (StepContext) null));
+        flow.setNextFromAttribute(resolveReferences(flow.getNextFromAttribute(), (StepContext) null));
+       	_resolve(flow.getExecutionElements(), stepContext);
 
         return flow;
     }

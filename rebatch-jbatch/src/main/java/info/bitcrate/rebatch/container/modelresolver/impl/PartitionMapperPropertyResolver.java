@@ -21,19 +21,41 @@ import info.bitcrate.rebatch.jaxb.PartitionMapper;
 import java.util.List;
 import java.util.Properties;
 
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
+
 public class PartitionMapperPropertyResolver extends
 		AbstractPropertyResolver<PartitionMapper> {
 
-	public PartitionMapperPropertyResolver(boolean isPartitionStep) {
-		super(isPartitionStep);
-	}
-
 	@Override
-	public PartitionMapper resolve(PartitionMapper mapper,
+	public PartitionMapper resolve(
+			PartitionMapper mapper,
 			List<Properties> properties) {
 
 		mapper.setRef(resolveReferences(mapper.getRef(), properties));
 		resolveJSLProperties(mapper.getProperties(), properties);
+
+		return mapper;
+	}
+	
+	@Override
+	public PartitionMapper resolve(
+			PartitionMapper mapper,
+			JobContext jobContext) {
+		
+		mapper.setRef(resolveReferences(mapper.getRef(), jobContext));
+		resolveJSLProperties(mapper.getProperties(), jobContext);
+
+		return mapper;
+	}
+	
+	@Override
+	public PartitionMapper resolve(
+			PartitionMapper mapper,
+			StepContext stepContext) {
+
+		mapper.setRef(resolveReferences(mapper.getRef(), stepContext));
+		resolveJSLProperties(mapper.getProperties(), stepContext);
 
 		return mapper;
 	}

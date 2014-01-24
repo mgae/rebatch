@@ -16,9 +16,11 @@ public class ExitStatusPassthruBatchlet extends AbstractBatchlet {
 	
 	@Override
 	public String process() throws Exception {
-		System.out.println("Exit status: " + exitStatus);
-		stepContext.setExitStatus(String.valueOf(exitStatus));
+		exitStatus = String.valueOf(exitStatus);
 		
-		return String.valueOf(exitStatus);
+		System.out.println("Exit status: " + exitStatus);
+		stepContext.setExitStatus(exitStatus);
+		
+		return exitStatus;
 	}
 }

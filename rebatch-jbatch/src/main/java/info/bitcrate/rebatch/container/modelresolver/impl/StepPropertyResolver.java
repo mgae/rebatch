@@ -23,11 +23,14 @@ import info.bitcrate.rebatch.jaxb.Step;
 import java.util.List;
 import java.util.Properties;
 
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
+
 public class StepPropertyResolver extends AbstractPropertyResolver<Step> {
 
-    public StepPropertyResolver(boolean isPartitionedStep) {
+    /*public StepPropertyResolver(boolean isPartitionedStep) {
         super(isPartitionedStep);
-    }
+    }*/
 
     @Override
     public Step resolve(Step step, List<Properties> properties) {
@@ -74,6 +77,70 @@ public class StepPropertyResolver extends AbstractPropertyResolver<Step> {
         
     	properties.remove(properties.size() - 1);
 
+    	return step;
+    }
+    
+    @Override
+    public Step resolve(Step step, JobContext jobContext) {
+    	step.setId(resolveReferences(step.getId(), jobContext));
+        step.setAllowStartIfComplete(resolveReferences(step.getAllowStartIfComplete(), jobContext));
+        step.setNextFromAttribute(resolveReferences(step.getNextFromAttribute(), jobContext));
+        step.setStartLimit(resolveReferences(step.getStartLimit(), jobContext));
+    	
+    	JSLProperties jslProperties = step.getProperties();
+    	
+    	if (jslProperties != null) {
+    		resolveJSLProperties(jslProperties, jobContext);
+    	} 
+    	
+        Partition partition = step.getPartition();
+        
+        if (partition != null) {
+        	_resolve(partition, jobContext);
+        }
+        
+    	if (step.getListeners() != null) {
+           	_resolve(step.getListeners().getListenerList(), jobContext);
+        }
+
+       	_resolve(step.getTransitionElements(), jobContext);
+       	_resolve(step.getBatchlet(), jobContext);
+       	_resolve(step.getChunk(), jobContext);
+        
+    	return step;
+    }
+    
+    @Override
+    public Step resolve(Step step, StepContext stepContext) {
+    	if (!step.getId().equals(stepContext.getStepName())) {
+    		return step;
+    	}
+    	
+    	step.setId(resolveReferences(step.getId(), stepContext));
+        step.setAllowStartIfComplete(resolveReferences(step.getAllowStartIfComplete(), stepContext));
+        step.setNextFromAttribute(resolveReferences(step.getNextFromAttribute(), stepContext));
+        step.setStartLimit(resolveReferences(step.getStartLimit(), stepContext));
+    	
+    	JSLProperties jslProperties = step.getProperties();
+    	
+    	if (jslProperties != null) {
+    		resolveJSLProperties(jslProperties, stepContext);
+    	} 
+    	
+        Partition partition = step.getPartition();
+        
+        if (partition != null) {
+        	_resolve(partition, stepContext);
+        }
+        
+    	if (step.getListeners() != null) {
+           	_resolve(step.getListeners().getListenerList(), stepContext);
+        }
+
+       	_resolve(step.getTransitionElements(), stepContext);
+       	_resolve(step.getBatchlet(), stepContext);
+       	_resolve(step.getChunk(), stepContext);
+        
     	return step;
     }
 }

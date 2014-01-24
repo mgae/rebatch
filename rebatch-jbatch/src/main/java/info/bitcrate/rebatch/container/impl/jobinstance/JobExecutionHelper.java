@@ -19,8 +19,9 @@ package info.bitcrate.rebatch.container.impl.jobinstance;
 import info.bitcrate.rebatch.container.impl.JobContextImpl;
 import info.bitcrate.rebatch.container.impl.JobInstanceImpl;
 import info.bitcrate.rebatch.container.jsl.JobModelResolver;
+import info.bitcrate.rebatch.container.modelresolver.ContextResolver;
 import info.bitcrate.rebatch.container.modelresolver.PropertyResolver;
-import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
+import info.bitcrate.rebatch.container.modelresolver.ResolverFactory;
 import info.bitcrate.rebatch.container.navigator.ModelNavigator;
 import info.bitcrate.rebatch.container.navigator.NavigatorFactory;
 import info.bitcrate.rebatch.container.services.InternalJobExecution;
@@ -50,8 +51,8 @@ public class JobExecutionHelper {
     private static ModelNavigator<JSLJob> getResolvedJobNavigator(final String jobXml, final Properties jobParameters, final boolean parallelExecution) {
         final JSLJob jobModel = new JobModelResolver().resolveModel(jobXml);
         final PropertyResolver<JSLJob> propResolver =
-        		PropertyResolverFactory.newInstance(JSLJob.class, parallelExecution);
-        		//PropertyResolverFactory.createJobPropertyResolver(parallelExecution);
+        		ResolverFactory.newInstance(JSLJob.class, parallelExecution);
+        		//ResolverFactory.createJobPropertyResolver(parallelExecution);
         		
         //propResolver.substituteProperties(jobModel, jobParameters);
         propResolver.resolve(jobModel, jobParameters);
@@ -64,8 +65,8 @@ public class JobExecutionHelper {
     		final boolean parallelExecution) {
     	
         final PropertyResolver<JSLJob> propResolver =
-        		PropertyResolverFactory.newInstance(JSLJob.class, parallelExecution);
-        		//PropertyResolverFactory.createJobPropertyResolver(parallelExecution);
+        		ResolverFactory.newInstance(JSLJob.class, parallelExecution);
+        		//ResolverFactory.createJobPropertyResolver(parallelExecution);
         //propResolver.substituteProperties(jobModel, jobParameters);
         
         if (parallelExecution) {
@@ -117,6 +118,10 @@ public class JobExecutionHelper {
         final RuntimeJobExecution executionHelper = PERSISTENCE_MANAGER_SERVICE.createJobExecution(jobInstance, jobParameters, jobContext.getBatchStatus());
 
         executionHelper.prepareForExecution(jobContext);
+        
+        //TODO resolve job context references
+        ContextResolver<JSLJob> resolver = ResolverFactory.newInstance(JSLJob.class, false);
+        resolver.resolve(jobNavigator.getRootModelElement(), jobContext);
 
         final JobStatus jobStatus = createNewJobStatus(jobInstance);
         JOB_STATUS_MANAGER_SERVICE.updateJobStatus(jobStatus);
@@ -219,6 +224,11 @@ public class JobExecutionHelper {
             executionHelper = PERSISTENCE_MANAGER_SERVICE.createJobExecution(jobInstance, restartJobParameters, jobContext.getBatchStatus());
         }
         executionHelper.prepareForExecution(jobContext, jobStatus.getRestartOn());
+        
+        //TODO resolve job context references
+        ContextResolver<JSLJob> resolver = ResolverFactory.newInstance(JSLJob.class, false);
+        resolver.resolve(jobNavigator.getRootModelElement(), jobContext);
+        
         JOB_STATUS_MANAGER_SERVICE.updateJobStatusWithNewExecution(jobInstance.getInstanceId(), executionHelper.getExecutionId());
 
         return executionHelper;

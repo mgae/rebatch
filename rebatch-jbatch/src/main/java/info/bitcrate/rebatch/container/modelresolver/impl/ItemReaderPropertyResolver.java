@@ -21,17 +21,32 @@ import info.bitcrate.rebatch.jaxb.ItemReader;
 import java.util.List;
 import java.util.Properties;
 
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
+
 public class ItemReaderPropertyResolver extends
 		AbstractPropertyResolver<ItemReader> {
-
-	public ItemReaderPropertyResolver(boolean isPartitionStep) {
-		super(isPartitionStep);
-	}
 
 	@Override
 	public ItemReader resolve(ItemReader reader, List<Properties> properties) {
 		reader.setRef(resolveReferences(reader.getRef(), properties));
 		resolveJSLProperties(reader.getProperties(), properties);
+
+		return reader;
+	}
+
+	@Override
+	public ItemReader resolve(ItemReader reader, JobContext jobContext) {
+		reader.setRef(resolveReferences(reader.getRef(), jobContext));
+		resolveJSLProperties(reader.getProperties(), jobContext);
+
+		return reader;
+	}
+
+	@Override
+	public ItemReader resolve(ItemReader reader, StepContext stepContext) {
+		reader.setRef(resolveReferences(reader.getRef(), stepContext));
+		resolveJSLProperties(reader.getProperties(), stepContext);
 
 		return reader;
 	}

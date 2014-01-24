@@ -21,11 +21,10 @@ import info.bitcrate.rebatch.jaxb.ItemWriter;
 import java.util.List;
 import java.util.Properties;
 
-public class ItemWriterPropertyResolver extends AbstractPropertyResolver<ItemWriter> {
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 
-    public ItemWriterPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+public class ItemWriterPropertyResolver extends AbstractPropertyResolver<ItemWriter> {
 
     @Override
     public ItemWriter resolve(ItemWriter writer, List<Properties> properties) {
@@ -34,4 +33,20 @@ public class ItemWriterPropertyResolver extends AbstractPropertyResolver<ItemWri
 
     	return writer;
     }
+
+    @Override
+	public ItemWriter resolve(ItemWriter writer, JobContext jobContext) {
+    	writer.setRef(resolveReferences(writer.getRef(), jobContext));
+		resolveJSLProperties(writer.getProperties(), jobContext);
+
+		return writer;
+	}
+
+	@Override
+	public ItemWriter resolve(ItemWriter writer, StepContext stepContext) {
+		writer.setRef(resolveReferences(writer.getRef(), stepContext));
+		resolveJSLProperties(writer.getProperties(), stepContext);
+
+		return writer;
+	}
 }

@@ -21,17 +21,31 @@ import info.bitcrate.rebatch.jaxb.Analyzer;
 import java.util.List;
 import java.util.Properties;
 
-public class AnalyzerPropertyResolver extends
-		AbstractPropertyResolver<Analyzer> {
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 
-	public AnalyzerPropertyResolver(boolean isPartitionStep) {
-		super(isPartitionStep);
-	}
+public class AnalyzerPropertyResolver extends AbstractPropertyResolver<Analyzer> {
 
 	@Override
 	public Analyzer resolve(Analyzer analyzer, List<Properties> properties) {
 		analyzer.setRef(resolveReferences(analyzer.getRef(), properties));
 		resolveJSLProperties(analyzer.getProperties(), properties);
+
+		return analyzer;
+	}
+	
+	@Override
+	public Analyzer resolve(Analyzer analyzer, JobContext jobContext) {
+		analyzer.setRef(resolveReferences(analyzer.getRef(), jobContext));
+		resolveJSLProperties(analyzer.getProperties(), jobContext);
+
+		return analyzer;
+	}
+	
+	@Override
+	public Analyzer resolve(Analyzer analyzer, StepContext stepContext) {
+		analyzer.setRef(resolveReferences(analyzer.getRef(), stepContext));
+		resolveJSLProperties(analyzer.getProperties(), stepContext);
 
 		return analyzer;
 	}

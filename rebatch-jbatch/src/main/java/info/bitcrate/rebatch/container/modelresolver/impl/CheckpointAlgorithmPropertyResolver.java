@@ -21,12 +21,11 @@ import info.bitcrate.rebatch.jaxb.CheckpointAlgorithm;
 import java.util.List;
 import java.util.Properties;
 
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
+
 public class CheckpointAlgorithmPropertyResolver 
 	extends AbstractPropertyResolver<CheckpointAlgorithm> {
-
-    public CheckpointAlgorithmPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
 
 	@Override
 	public CheckpointAlgorithm resolve(
@@ -35,6 +34,28 @@ public class CheckpointAlgorithmPropertyResolver
 
 		algorithm.setRef(resolveReferences(algorithm.getRef(), properties));
 		resolveJSLProperties(algorithm.getProperties(), properties);
+
+		return algorithm;
+	}
+	
+	@Override
+	public CheckpointAlgorithm resolve(
+			CheckpointAlgorithm algorithm, 
+			JobContext jobContext) {
+		
+		algorithm.setRef(resolveReferences(algorithm.getRef(), jobContext));
+		resolveJSLProperties(algorithm.getProperties(), jobContext);
+
+		return algorithm;
+	}
+
+	@Override
+	public CheckpointAlgorithm resolve(
+			CheckpointAlgorithm algorithm, 
+			StepContext stepContext) {
+		
+		algorithm.setRef(resolveReferences(algorithm.getRef(), stepContext));
+		resolveJSLProperties(algorithm.getProperties(), stepContext);
 
 		return algorithm;
 	}

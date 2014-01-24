@@ -21,11 +21,10 @@ import info.bitcrate.rebatch.jaxb.Decision;
 import java.util.List;
 import java.util.Properties;
 
-public class DecisionPropertyResolver extends AbstractPropertyResolver<Decision> {
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 
-    public DecisionPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+public class DecisionPropertyResolver extends AbstractPropertyResolver<Decision> {
 
     public Decision resolve(Decision decision, List<Properties> properties) {
         decision.setId(resolveReferences(decision.getId(), properties));
@@ -33,6 +32,28 @@ public class DecisionPropertyResolver extends AbstractPropertyResolver<Decision>
 
       	resolveJSLProperties(decision.getProperties(), properties);
        	_resolve(decision.getTransitionElements(), properties);
+
+        return decision;
+    }
+    
+    @Override
+    public Decision resolve(Decision decision, JobContext jobContext) {
+        decision.setId(resolveReferences(decision.getId(), jobContext));
+        decision.setRef(resolveReferences(decision.getRef(), jobContext));
+
+      	resolveJSLProperties(decision.getProperties(), jobContext);
+       	_resolve(decision.getTransitionElements(), jobContext);
+
+        return decision;
+    }
+    
+    @Override
+    public Decision resolve(Decision decision, StepContext stepContext) {
+        decision.setId(resolveReferences(decision.getId(), (StepContext) null));
+        decision.setRef(resolveReferences(decision.getRef(), (StepContext) null));
+
+      	resolveJSLProperties(decision.getProperties(), (StepContext) null);
+       	_resolve(decision.getTransitionElements(), (StepContext) null);
 
         return decision;
     }

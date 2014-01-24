@@ -21,12 +21,11 @@ import info.bitcrate.rebatch.jaxb.PartitionReducer;
 import java.util.List;
 import java.util.Properties;
 
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
+
 public class PartitionReducerPropertyResolver 
 		extends AbstractPropertyResolver<PartitionReducer> {
-
-    public PartitionReducerPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
 
     @Override
     public PartitionReducer resolve(
@@ -35,6 +34,28 @@ public class PartitionReducerPropertyResolver
 
         reducer.setRef(resolveReferences(reducer.getRef(), properties));
        	resolveJSLProperties(reducer.getProperties(), properties);
+
+    	return reducer;
+    }
+    
+    @Override
+    public PartitionReducer resolve(
+    		PartitionReducer reducer,
+    		JobContext jobContext) {
+    	
+        reducer.setRef(resolveReferences(reducer.getRef(), jobContext));
+       	resolveJSLProperties(reducer.getProperties(), jobContext);
+
+    	return reducer;
+    }
+    
+    @Override
+    public PartitionReducer resolve(
+    		PartitionReducer reducer,
+    		StepContext stepContext) {
+
+    	reducer.setRef(resolveReferences(reducer.getRef(), stepContext));
+       	resolveJSLProperties(reducer.getProperties(), stepContext);
 
     	return reducer;
     }

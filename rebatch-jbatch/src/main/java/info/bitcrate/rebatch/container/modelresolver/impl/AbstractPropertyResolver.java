@@ -16,17 +16,26 @@
 */
 package info.bitcrate.rebatch.container.modelresolver.impl;
 
+import info.bitcrate.rebatch.container.exception.BatchContainerRuntimeException;
 import info.bitcrate.rebatch.container.exception.IllegalBatchPropertyException;
+import info.bitcrate.rebatch.container.exception.JobSpecificationException;
+import info.bitcrate.rebatch.container.modelresolver.ContextResolver;
 import info.bitcrate.rebatch.container.modelresolver.PropertyResolver;
-import info.bitcrate.rebatch.container.modelresolver.PropertyResolverFactory;
+import info.bitcrate.rebatch.container.modelresolver.ResolverFactory;
 import info.bitcrate.rebatch.jaxb.JSLProperties;
 import info.bitcrate.rebatch.jaxb.Property;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B> {
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
+
+public abstract class AbstractPropertyResolver<B> 
+	implements Cloneable, ContextResolver<B>, PropertyResolver<B> {
 
 	static final int PROPERTY_SYSTEM = 0;
 	static final int PROPERTY_JOB_PARAMETER = 1;
@@ -78,11 +87,23 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
 	}
 	
     protected boolean isPartitionedStep = false;
-
     
-    public AbstractPropertyResolver(boolean isPartitionStep) {
-        this.isPartitionedStep = isPartitionStep;
+    public AbstractPropertyResolver() {
     }
+    
+	@Override
+    @SuppressWarnings("unchecked")
+    public AbstractPropertyResolver<B> clone() {
+    	try {
+    		return (AbstractPropertyResolver<B>) super.clone();
+    	} catch (CloneNotSupportedException e) {
+    		throw new BatchContainerRuntimeException(e);
+    	}
+    }
+    
+    public void setPartitionedStep(boolean isPartitionedStep) {
+		this.isPartitionedStep = isPartitionedStep;
+	}
 
     @Override
     public B resolve(final B element, Properties jobParameters) {
@@ -135,11 +156,11 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
 		Class<T> klazz = (Class<T>) element.getClass();
 		
 		PropertyResolver<T> resolver = 
-				PropertyResolverFactory.newInstance(klazz, isPartitionedStep); 
+				ResolverFactory.newInstance(klazz, isPartitionedStep); 
 		
 		resolver.resolve(element, properties);
 	}
-
+	
     protected void resolveJSLProperties(
     		final JSLProperties jslProperties,
     		final List<Properties> properties,
@@ -421,4 +442,165 @@ public abstract class AbstractPropertyResolver<B> implements PropertyResolver<B>
     	
     	return value;
     }
+	/* ********************************************************************** */
+
+    protected <T> void _resolve(List<T> elements, JobContext jobContext) {
+    	for (T element : elements) {
+    		_resolve(element, jobContext);
+    	}
+    }
+    
+	@SuppressWarnings("unchecked")
+	protected <T> void _resolve(T element, JobContext jobContext) {
+		
+		if (element == null) {
+    		/*-
+    		 * Nothing to resolve
+    		 */
+			return;
+		}
+		
+		Class<T> klazz = (Class<T>) element.getClass();
+		
+		ContextResolver<T> resolver = 
+				ResolverFactory.newInstance(klazz, isPartitionedStep); 
+		
+		resolver.resolve(element, jobContext);
+	}
+
+    protected void resolveJSLProperties(
+    		final JSLProperties jslProperties,
+    		final JobContext jobContext) {
+
+    	if (jslProperties == null) {
+    		/*-
+    		 * Nothing to resolve
+    		 */
+    		return;
+    	}
+    	
+    	for (final Property jslProperty : jslProperties.getPropertyList()) {
+    		String name = resolveReferences(jslProperty.getName(), jobContext);
+    		String value = resolveReferences(jslProperty.getValue(), jobContext);
+    		
+            // Update JAXB model
+    		jslProperty.setName(name);
+    		jslProperty.setValue(value);
+    	}
+    }
+	
+    protected String resolveReferences(String jslValue, JobContext jobContext) {
+        if (jslValue == null) {
+            return null;
+        }
+    	
+    	Pattern jobContextSearch = Pattern.compile("\\$\\{job([a-zA-Z]+)\\}");
+    	Matcher matcher = jobContextSearch.matcher(jslValue);
+    	
+    	while (matcher.find()) {
+    		String reference = matcher.group();
+    		String property = matcher.group(1);
+    		String replacement = null;
+
+    		if ("Name".equals(property)) {
+    			replacement = jobContext.getJobName();
+    		} else if ("InstanceId".equals(property)) {
+    			replacement = String.valueOf(jobContext.getInstanceId());
+    		} else if ("ExecutionId".equals(property)) {
+    			replacement = String.valueOf(jobContext.getExecutionId());
+    		} else {
+        		throw new JobSpecificationException(
+        				"Unknown job context attribute " + property
+        						+ " can not be resolved");
+    		}
+
+    		jslValue = jslValue.replace(reference, replacement);
+    	}
+    	
+    	return jslValue;
+    }
+	
+	/* ********************************************************************** */
+
+    protected <T> void _resolve(List<T> elements, StepContext stepContext) {
+    	for (T element : elements) {
+    		_resolve(element, stepContext);
+    	}
+    }
+    
+	@SuppressWarnings("unchecked")
+	protected <T> void _resolve(T element, StepContext stepContext) {
+		
+		if (element == null) {
+    		/*-
+    		 * Nothing to resolve
+    		 */
+			return;
+		}
+		
+		Class<T> klazz = (Class<T>) element.getClass();
+		
+		ContextResolver<T> resolver = 
+				ResolverFactory.newInstance(klazz, isPartitionedStep); 
+		
+		resolver.resolve(element, stepContext);
+	}
+
+    protected void resolveJSLProperties(
+    		final JSLProperties jslProperties,
+    		final StepContext stepContext) {
+
+    	if (jslProperties == null) {
+    		/*-
+    		 * Nothing to resolve
+    		 */
+    		return;
+    	}
+    	
+    	for (final Property jslProperty : jslProperties.getPropertyList()) {
+    		String name = resolveReferences(jslProperty.getName(), stepContext);
+    		String value = resolveReferences(jslProperty.getValue(), stepContext);
+    		
+            // Update JAXB model
+    		jslProperty.setName(name);
+    		jslProperty.setValue(value);
+    	}
+    }
+	
+    protected String resolveReferences(String jslValue, StepContext stepContext) {
+        if (jslValue == null) {
+            return null;
+        }
+    	
+    	Pattern jobContextSearch = Pattern.compile("\\$\\{step([a-zA-Z]+)\\}");
+    	Matcher matcher = jobContextSearch.matcher(jslValue);
+    	
+    	while (matcher.find()) {
+    		if (stepContext == null) {
+        		throw new JobSpecificationException(
+        				"Step context attributes are not in "
+        				+ "scope for reference " + jslValue);
+    		}
+    		
+    		String reference = matcher.group();
+    		String property = matcher.group(1);
+    		String replacement = null;
+
+    		if ("Name".equals(property)) {
+    			replacement = stepContext.getStepName();
+    		} else if ("ExecutionId".equals(property)) {
+    			replacement = String.valueOf(stepContext.getStepExecutionId());
+    		} else {
+        		throw new JobSpecificationException(
+        				"Unknown step context attribute " + property
+        						+ " can not be resolved");
+    		}
+    		
+    		jslValue = jslValue.replace(reference, replacement);
+    	}
+    	
+    	return jslValue;
+    }
+	
+	/* ********************************************************************** */
 }

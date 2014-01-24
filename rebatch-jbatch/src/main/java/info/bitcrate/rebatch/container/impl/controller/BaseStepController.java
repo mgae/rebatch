@@ -25,6 +25,8 @@ import info.bitcrate.rebatch.container.impl.StepContextImpl;
 import info.bitcrate.rebatch.container.impl.StepExecutionImpl;
 import info.bitcrate.rebatch.container.impl.controller.chunk.PersistentDataWrapper;
 import info.bitcrate.rebatch.container.impl.jobinstance.RuntimeJobExecution;
+import info.bitcrate.rebatch.container.modelresolver.ContextResolver;
+import info.bitcrate.rebatch.container.modelresolver.ResolverFactory;
 import info.bitcrate.rebatch.container.services.BatchKernelService;
 import info.bitcrate.rebatch.container.services.JobStatusManagerService;
 import info.bitcrate.rebatch.container.services.ServicesManager;
@@ -32,6 +34,7 @@ import info.bitcrate.rebatch.container.status.ExecutionStatus;
 import info.bitcrate.rebatch.container.status.ExtendedBatchStatus;
 import info.bitcrate.rebatch.container.status.StepStatus;
 import info.bitcrate.rebatch.container.util.PartitionDataWrapper;
+import info.bitcrate.rebatch.jaxb.JSLJob;
 import info.bitcrate.rebatch.jaxb.JSLProperties;
 import info.bitcrate.rebatch.jaxb.Property;
 import info.bitcrate.rebatch.jaxb.Step;
@@ -233,6 +236,10 @@ public abstract class BaseStepController implements ExecutionElementController {
     private void startStep() {
         // Update status
         statusStarting();
+        
+        // Resolve references to step attributes in JSL
+        resolveContextReferences();
+        
         //Set Step context properties
         setContextProperties();
         //Set up step artifacts like step listeners, partition reducers
@@ -340,6 +347,12 @@ public abstract class BaseStepController implements ExecutionElementController {
         JOB_STATUS_MANAGER_SERVICE.updateJobCurrentStep(jobInstance.getInstanceId(), step.getId());
         JOB_STATUS_MANAGER_SERVICE.updateStepStatus(stepStatus.getStepExecutionId(), stepStatus);
         stepContext.setBatchStatus(BatchStatus.STARTING);
+    }
+    
+    protected void resolveContextReferences() {
+    	JSLJob job = jobExecutionImpl.getJobNavigator().getRootModelElement();
+        ContextResolver<JSLJob> resolver = ResolverFactory.newInstance(JSLJob.class, false);
+        resolver.resolve(job, stepContext);
     }
 
     protected void accumulateJobMetrics() {

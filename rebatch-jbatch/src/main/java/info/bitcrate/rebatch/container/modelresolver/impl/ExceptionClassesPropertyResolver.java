@@ -21,29 +21,74 @@ import info.bitcrate.rebatch.jaxb.ExceptionClassFilter;
 import java.util.List;
 import java.util.Properties;
 
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 
-public class ExceptionClassesPropertyResolver extends AbstractPropertyResolver<ExceptionClassFilter> {
+public class ExceptionClassesPropertyResolver extends
+		AbstractPropertyResolver<ExceptionClassFilter> {
 
-    public ExceptionClassesPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+	@Override
+	public ExceptionClassFilter resolve(
+			ExceptionClassFilter exceptionClassFilter,
+			List<Properties> properties) {
 
-    @Override
-    public ExceptionClassFilter resolve(
-    		ExceptionClassFilter exceptionClassFilter,
-    		List<Properties> properties) {
-    
-        // Resolve ExceptionClassFilter properties
-        if (exceptionClassFilter.getIncludeList() != null) {
-            for (final ExceptionClassFilter.Include includeElem : exceptionClassFilter.getIncludeList()) {
-                includeElem.setClazz(resolveReferences(includeElem.getClazz(), properties));
-            }
+		if (exceptionClassFilter.getIncludeList() != null) {
+			for (final ExceptionClassFilter.Include includeElem : exceptionClassFilter
+					.getIncludeList()) {
+				includeElem.setClazz(resolveReferences(includeElem.getClazz(),
+						properties));
+			}
 
-            for (final ExceptionClassFilter.Exclude excludeElem : exceptionClassFilter.getExcludeList()) {
-                excludeElem.setClazz(resolveReferences(excludeElem.getClazz(), properties));
-            }
-        }
+			for (final ExceptionClassFilter.Exclude excludeElem : exceptionClassFilter
+					.getExcludeList()) {
+				excludeElem.setClazz(resolveReferences(excludeElem.getClazz(),
+						properties));
+			}
+		}
 
-        return exceptionClassFilter;
-    }
+		return exceptionClassFilter;
+	}
+
+	@Override
+	public ExceptionClassFilter resolve(
+			ExceptionClassFilter exceptionClassFilter, JobContext jobContext) {
+
+		if (exceptionClassFilter.getIncludeList() != null) {
+			for (final ExceptionClassFilter.Include includeElem : exceptionClassFilter
+					.getIncludeList()) {
+				includeElem.setClazz(resolveReferences(includeElem.getClazz(),
+						jobContext));
+			}
+
+			for (final ExceptionClassFilter.Exclude excludeElem : exceptionClassFilter
+					.getExcludeList()) {
+				excludeElem.setClazz(resolveReferences(excludeElem.getClazz(),
+						jobContext));
+			}
+		}
+
+		return exceptionClassFilter;
+	}
+
+	@Override
+	public ExceptionClassFilter resolve(
+			ExceptionClassFilter exceptionClassFilter,
+			StepContext stepContext) {
+
+		if (exceptionClassFilter.getIncludeList() != null) {
+			for (final ExceptionClassFilter.Include includeElem : exceptionClassFilter
+					.getIncludeList()) {
+				includeElem.setClazz(resolveReferences(includeElem.getClazz(),
+						stepContext));
+			}
+
+			for (final ExceptionClassFilter.Exclude excludeElem : exceptionClassFilter
+					.getExcludeList()) {
+				excludeElem.setClazz(resolveReferences(excludeElem.getClazz(),
+						stepContext));
+			}
+		}
+
+		return exceptionClassFilter;
+	}
 }

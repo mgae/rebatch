@@ -21,20 +21,34 @@ import info.bitcrate.rebatch.jaxb.Split;
 import java.util.List;
 import java.util.Properties;
 
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
+
 public class SplitPropertyResolver extends AbstractPropertyResolver<Split> {
-
-
-    public SplitPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
 
     @Override
     public Split resolve(Split split, List<Properties> properties) {
         split.setId(resolveReferences(split.getId(), properties));
         split.setNextFromAttribute(resolveReferences(split.getNextFromAttribute(), properties));
-
-        // Resolve all the properties defined for this step
         _resolve(split.getFlows(), properties);
+        
+    	return split;
+    }
+    
+    @Override
+    public Split resolve(Split split, JobContext jobContext) {
+        split.setId(resolveReferences(split.getId(), jobContext));
+        split.setNextFromAttribute(resolveReferences(split.getNextFromAttribute(), jobContext));
+        _resolve(split.getFlows(), jobContext);
+        
+    	return split;
+    }
+    
+    @Override
+    public Split resolve(Split split, StepContext stepContext) {
+        split.setId(resolveReferences(split.getId(), (StepContext) null));
+        split.setNextFromAttribute(resolveReferences(split.getNextFromAttribute(), (StepContext) null));
+        _resolve(split.getFlows(), stepContext);
         
     	return split;
     }

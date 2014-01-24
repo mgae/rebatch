@@ -19,7 +19,7 @@ package info.bitcrate.rebatch.container.modelresolver;
 import java.util.List;
 import java.util.Properties;
 
-public interface PropertyResolver<B> {
+public interface PropertyResolver<B> extends Cloneable {
 	
 	B resolve(B element, Properties jobParameters);
 	

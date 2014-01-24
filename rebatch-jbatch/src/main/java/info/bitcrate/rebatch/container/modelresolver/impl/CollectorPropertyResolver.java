@@ -21,16 +21,31 @@ import info.bitcrate.rebatch.jaxb.Collector;
 import java.util.List;
 import java.util.Properties;
 
-public class CollectorPropertyResolver extends AbstractPropertyResolver<Collector> {
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 
-    public CollectorPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+public class CollectorPropertyResolver extends AbstractPropertyResolver<Collector> {
 
 	@Override
 	public Collector resolve(Collector collector, List<Properties> properties) {
 		collector.setRef(resolveReferences(collector.getRef(), properties));
 		resolveJSLProperties(collector.getProperties(), properties);
+
+		return collector;
+	}
+	
+	@Override
+	public Collector resolve(Collector collector, JobContext jobContext) {
+		collector.setRef(resolveReferences(collector.getRef(), jobContext));
+		resolveJSLProperties(collector.getProperties(), jobContext);
+
+		return collector;
+	}
+	
+	@Override
+	public Collector resolve(Collector collector, StepContext stepContext) {
+		collector.setRef(resolveReferences(collector.getRef(), stepContext));
+		resolveJSLProperties(collector.getProperties(), stepContext);
 
 		return collector;
 	}

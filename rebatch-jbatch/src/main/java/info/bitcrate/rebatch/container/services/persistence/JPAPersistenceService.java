@@ -66,8 +66,10 @@ import static info.bitcrate.rebatch.container.util.Serializations.serialize;
 
 public class JPAPersistenceService implements PersistenceManagerService {
     private static final String[] DELETE_QUERIES = {
-        StepExecutionEntity.Queries.DELETE_BY_INSTANCE_ID, CheckpointEntity.Queries.DELETE_BY_INSTANCE_ID,
-        JobExecutionEntity.Queries.DELETE_BY_INSTANCE_ID, JobInstanceEntity.Queries.DELETE_BY_INSTANCE_ID
+        StepExecutionEntity.Queries.DELETE_BY_INSTANCE_ID, 
+        CheckpointEntity.Queries.DELETE_BY_INSTANCE_ID,
+        JobExecutionEntity.Queries.DELETE_BY_INSTANCE_ID, 
+        JobInstanceEntity.Queries.DELETE_BY_INSTANCE_ID
     };
 
     private EntityManagerProvider emProvider;

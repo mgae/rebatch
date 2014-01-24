@@ -8,9 +8,10 @@ import java.util.Properties;
 import javax.batch.operations.JobOperator;
 import javax.batch.runtime.BatchRuntime;
 import javax.batch.runtime.BatchStatus;
+import javax.batch.runtime.JobInstance;
 import javax.batch.runtime.Metric;
-import javax.batch.runtime.StepExecution;
 import javax.batch.runtime.Metric.MetricType;
+import javax.batch.runtime.StepExecution;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -66,5 +67,42 @@ public class TestJslVariableSubstitution {
 				Assert.assertEquals(6, m.getValue());
 			}
 		}
+	}
+	
+	@Test
+	public void testJobContextSubstitution() {
+		long executionId = operator.start("job-context-substitution-test", null);
+		JobInstance instance = operator.getJobInstance(executionId);
+		
+		Batches.waitForEnd(executionId);
+		
+		Assert.assertEquals(
+				executionId + "_" + instance.getInstanceId() + "_" + instance.getJobName(), 
+				operator.getJobExecution(executionId).getExitStatus());
+	}
+	
+	@Test
+	public void testStepContextOutOfScope() {
+		long executionId = operator.start("step-context-out-of-scope-test", null);
+
+		Batches.waitForEnd(executionId);
+		
+		Assert.assertEquals(
+				"FAILED", 
+				operator.getJobExecution(executionId).getExitStatus());
+	}
+	
+	@Test
+	public void testStepContextSubstitution() {
+		long executionId = operator.start("step-context-substitution-test", null);
+
+		Batches.waitForEnd(executionId);
+		
+		List<StepExecution> steps = operator.getStepExecutions(executionId);
+		StepExecution step1 = steps.get(0);
+		
+		Assert.assertEquals(
+				executionId + "_" + step1.getStepExecutionId() + "_" + step1.getStepName(), 
+				operator.getJobExecution(executionId).getExitStatus());
 	}
 }

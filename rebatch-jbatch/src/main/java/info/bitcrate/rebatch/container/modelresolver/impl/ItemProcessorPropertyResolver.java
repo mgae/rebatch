@@ -21,12 +21,11 @@ import info.bitcrate.rebatch.jaxb.ItemProcessor;
 import java.util.List;
 import java.util.Properties;
 
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
+
 public class ItemProcessorPropertyResolver extends
 		AbstractPropertyResolver<ItemProcessor> {
-
-	public ItemProcessorPropertyResolver(boolean isPartitionStep) {
-		super(isPartitionStep);
-	}
 
 	@Override
 	public ItemProcessor resolve(
@@ -35,6 +34,22 @@ public class ItemProcessorPropertyResolver extends
 		
 		processor.setRef(resolveReferences(processor.getRef(), properties));
 		resolveJSLProperties(processor.getProperties(), properties);
+
+		return processor;
+	}
+	
+	@Override
+	public ItemProcessor resolve(ItemProcessor processor, JobContext jobContext) {
+		processor.setRef(resolveReferences(processor.getRef(), jobContext));
+		resolveJSLProperties(processor.getProperties(), jobContext);
+
+		return processor;
+	}
+
+	@Override
+	public ItemProcessor resolve(ItemProcessor processor, StepContext stepContext) {
+		processor.setRef(resolveReferences(processor.getRef(), stepContext));
+		resolveJSLProperties(processor.getProperties(), stepContext);
 
 		return processor;
 	}

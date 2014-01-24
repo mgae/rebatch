@@ -21,17 +21,32 @@ import info.bitcrate.rebatch.jaxb.Listener;
 import java.util.List;
 import java.util.Properties;
 
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
+
 public class ListenerPropertyResolver extends
 		AbstractPropertyResolver<Listener> {
-
-	public ListenerPropertyResolver(boolean isPartitionStep) {
-		super(isPartitionStep);
-	}
 
 	@Override
 	public Listener resolve(Listener listener, List<Properties> properties) {
 		listener.setRef(resolveReferences(listener.getRef(), properties));
 		resolveJSLProperties(listener.getProperties(), properties);
+
+		return listener;
+	}
+	
+	@Override
+	public Listener resolve(Listener listener, JobContext jobContext) {
+		listener.setRef(resolveReferences(listener.getRef(), jobContext));
+		resolveJSLProperties(listener.getProperties(), jobContext);
+
+		return listener;
+	}
+	
+	@Override
+	public Listener resolve(Listener listener, StepContext stepContext) {
+		listener.setRef(resolveReferences(listener.getRef(), stepContext));
+		resolveJSLProperties(listener.getProperties(), stepContext);
 
 		return listener;
 	}

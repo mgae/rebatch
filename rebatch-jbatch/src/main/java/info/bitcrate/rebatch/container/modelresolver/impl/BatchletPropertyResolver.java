@@ -21,18 +21,31 @@ import info.bitcrate.rebatch.jaxb.Batchlet;
 import java.util.List;
 import java.util.Properties;
 
-public class BatchletPropertyResolver 
-	extends AbstractPropertyResolver<Batchlet> {
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 
-    public BatchletPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+public class BatchletPropertyResolver extends AbstractPropertyResolver<Batchlet> {
 
 	@Override
 	public Batchlet resolve(Batchlet batchlet, List<Properties> properties) {
-
 		batchlet.setRef(resolveReferences(batchlet.getRef(), properties));
 		resolveJSLProperties(batchlet.getProperties(), properties);
+
+		return batchlet;
+	}
+	
+	@Override
+	public Batchlet resolve(Batchlet batchlet, JobContext jobContext) {
+		batchlet.setRef(resolveReferences(batchlet.getRef(), jobContext));
+		resolveJSLProperties(batchlet.getProperties(), jobContext);
+
+		return batchlet;
+	}
+
+	@Override
+	public Batchlet resolve(Batchlet batchlet, StepContext stepContext) {
+		batchlet.setRef(resolveReferences(batchlet.getRef(), stepContext));
+		resolveJSLProperties(batchlet.getProperties(), stepContext);
 
 		return batchlet;
 	}

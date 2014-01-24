@@ -25,11 +25,10 @@ import info.bitcrate.rebatch.jaxb.Stop;
 import java.util.List;
 import java.util.Properties;
 
-public class ControlElementPropertyResolver extends AbstractPropertyResolver<TransitionElement> {
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 
-    public ControlElementPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+public class ControlElementPropertyResolver extends AbstractPropertyResolver<TransitionElement> {
 
     @Override
     public TransitionElement resolve(
@@ -51,6 +50,56 @@ public class ControlElementPropertyResolver extends AbstractPropertyResolver<Tra
             final Stop stop = (Stop) controlElement;
             stop.setExitStatus(resolveReferences(stop.getExitStatus(), properties));
             stop.setRestart(resolveReferences(stop.getRestart(), properties));
+        }
+
+    	return controlElement;
+    }
+    
+    @Override
+    public TransitionElement resolve(
+    		TransitionElement controlElement,
+    		JobContext jobContext) {
+
+        controlElement.setOn(resolveReferences(controlElement.getOn(), jobContext));
+
+        if (controlElement instanceof End) {
+            final End end = (End) controlElement;
+            end.setExitStatus(resolveReferences(end.getExitStatus(), jobContext));
+        } else if (controlElement instanceof Fail) {
+            final Fail fail = (Fail) controlElement;
+            fail.setExitStatus(resolveReferences(fail.getExitStatus(), jobContext));
+        } else if (controlElement instanceof Next) {
+            final Next next = (Next) controlElement;
+            next.setTo(resolveReferences(next.getTo(), jobContext));
+        } else if (controlElement instanceof Stop) {
+            final Stop stop = (Stop) controlElement;
+            stop.setExitStatus(resolveReferences(stop.getExitStatus(), jobContext));
+            stop.setRestart(resolveReferences(stop.getRestart(), jobContext));
+        }
+
+    	return controlElement;
+    }
+    
+    @Override
+    public TransitionElement resolve(
+    		TransitionElement controlElement,
+    		StepContext stepContext) {
+    	
+        controlElement.setOn(resolveReferences(controlElement.getOn(), stepContext));
+
+        if (controlElement instanceof End) {
+            final End end = (End) controlElement;
+            end.setExitStatus(resolveReferences(end.getExitStatus(), stepContext));
+        } else if (controlElement instanceof Fail) {
+            final Fail fail = (Fail) controlElement;
+            fail.setExitStatus(resolveReferences(fail.getExitStatus(), stepContext));
+        } else if (controlElement instanceof Next) {
+            final Next next = (Next) controlElement;
+            next.setTo(resolveReferences(next.getTo(), stepContext));
+        } else if (controlElement instanceof Stop) {
+            final Stop stop = (Stop) controlElement;
+            stop.setExitStatus(resolveReferences(stop.getExitStatus(), stepContext));
+            stop.setRestart(resolveReferences(stop.getRestart(), stepContext));
         }
 
     	return controlElement;

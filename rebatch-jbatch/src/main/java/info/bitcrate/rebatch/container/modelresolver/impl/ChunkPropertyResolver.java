@@ -21,15 +21,13 @@ import info.bitcrate.rebatch.jaxb.Chunk;
 import java.util.List;
 import java.util.Properties;
 
-public class ChunkPropertyResolver extends AbstractPropertyResolver<Chunk> {
+import javax.batch.runtime.context.JobContext;
+import javax.batch.runtime.context.StepContext;
 
-    public ChunkPropertyResolver(boolean isPartitionStep) {
-        super(isPartitionStep);
-    }
+public class ChunkPropertyResolver extends AbstractPropertyResolver<Chunk> {
 
     @Override
     public Chunk resolve(Chunk chunk, List<Properties> properties) {
-
         chunk.setCheckpointPolicy(resolveReferences(chunk.getCheckpointPolicy(), properties));
         chunk.setItemCount(resolveReferences(chunk.getItemCount(), properties));
         chunk.setTimeLimit(resolveReferences(chunk.getTimeLimit(), properties));
@@ -43,6 +41,44 @@ public class ChunkPropertyResolver extends AbstractPropertyResolver<Chunk> {
        	_resolve(chunk.getSkippableExceptionClasses(), properties);
        	_resolve(chunk.getRetryableExceptionClasses(), properties);
        	_resolve(chunk.getNoRollbackExceptionClasses(), properties);
+
+    	return chunk;
+    }
+    
+    @Override
+    public Chunk resolve(Chunk chunk, JobContext jobContext) {
+        chunk.setCheckpointPolicy(resolveReferences(chunk.getCheckpointPolicy(), jobContext));
+        chunk.setItemCount(resolveReferences(chunk.getItemCount(), jobContext));
+        chunk.setTimeLimit(resolveReferences(chunk.getTimeLimit(), jobContext));
+        chunk.setSkipLimit(resolveReferences(chunk.getSkipLimit(), jobContext));
+        chunk.setRetryLimit(resolveReferences(chunk.getRetryLimit(), jobContext));
+
+       	_resolve(chunk.getReader(), jobContext);
+       	_resolve(chunk.getProcessor(), jobContext);
+       	_resolve(chunk.getWriter(), jobContext);
+       	_resolve(chunk.getCheckpointAlgorithm(), jobContext);
+       	_resolve(chunk.getSkippableExceptionClasses(), jobContext);
+       	_resolve(chunk.getRetryableExceptionClasses(), jobContext);
+       	_resolve(chunk.getNoRollbackExceptionClasses(), jobContext);
+
+    	return chunk;
+    }
+    
+    @Override
+    public Chunk resolve(Chunk chunk, StepContext stepContext) {
+        chunk.setCheckpointPolicy(resolveReferences(chunk.getCheckpointPolicy(), stepContext));
+        chunk.setItemCount(resolveReferences(chunk.getItemCount(), stepContext));
+        chunk.setTimeLimit(resolveReferences(chunk.getTimeLimit(), stepContext));
+        chunk.setSkipLimit(resolveReferences(chunk.getSkipLimit(), stepContext));
+        chunk.setRetryLimit(resolveReferences(chunk.getRetryLimit(), stepContext));
+
+       	_resolve(chunk.getReader(), stepContext);
+       	_resolve(chunk.getProcessor(), stepContext);
+       	_resolve(chunk.getWriter(), stepContext);
+       	_resolve(chunk.getCheckpointAlgorithm(), stepContext);
+       	_resolve(chunk.getSkippableExceptionClasses(), stepContext);
+       	_resolve(chunk.getRetryableExceptionClasses(), stepContext);
+       	_resolve(chunk.getNoRollbackExceptionClasses(), stepContext);
 
     	return chunk;
     }
